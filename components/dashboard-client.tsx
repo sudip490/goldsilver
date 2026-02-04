@@ -11,7 +11,7 @@ import { NRBRatesCards } from "@/components/nrb-rates-cards";
 import { NepalMarketTable } from "@/components/nepal-market-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { MetalPrice, CountryData } from "@/lib/types";
+import { MetalPrice, CountryData, NepalRate, PriceHistory, NewsItem, NRBRate } from "@/lib/types";
 import { TrendingUp, Globe, Newspaper, RefreshCw } from "lucide-react";
 import { useRefresh } from "@/contexts/refresh-context";
 
@@ -20,11 +20,11 @@ interface DashboardClientProps {
         metalPrices: MetalPrice[];
         countryData: CountryData[];
         rates: Record<string, number>;
-        nrbRates: any[];
-        nepalRates: any[];
-        goldHistory: any[];
-        silverHistory: any[];
-        news: any[];
+        nrbRates: NRBRate[];
+        nepalRates: NepalRate[];
+        goldHistory: PriceHistory[];
+        silverHistory: PriceHistory[];
+        news: NewsItem[];
     };
 }
 
@@ -33,13 +33,13 @@ export function DashboardClient({ initialData }: DashboardClientProps) {
     const [metalPrices, setMetalPrices] = useState<MetalPrice[]>(initialData.metalPrices);
     const [countryData, setCountryData] = useState<CountryData[]>(initialData.countryData);
     const [rates, setRates] = useState<Record<string, number>>(initialData.rates);
-    const [nrbRates, setNrbRates] = useState<any[]>(initialData.nrbRates);
-    const [nepalRates, setNepalRates] = useState<any[]>(initialData.nepalRates);
-    const [historyData, setHistoryData] = useState<{ gold: any[]; silver: any[] }>({
+    const [nrbRates, setNrbRates] = useState<NRBRate[]>(initialData.nrbRates);
+    const [nepalRates, setNepalRates] = useState<NepalRate[]>(initialData.nepalRates);
+    const [historyData, setHistoryData] = useState<{ gold: PriceHistory[]; silver: PriceHistory[] }>({
         gold: initialData.goldHistory,
         silver: initialData.silverHistory
     });
-    const [news, setNews] = useState<any[]>(initialData.news);
+    const [news, setNews] = useState<NewsItem[]>(initialData.news);
     // Loading is false initially since we have server data
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);

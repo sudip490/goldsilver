@@ -54,3 +54,23 @@ export interface PortfolioTransaction {
     date: string;
     notes?: string;
 }
+
+export interface NepalRate {
+    key: string;
+    name: string;
+    unit: string;
+    price: number;
+    change?: number;
+    changePercent?: number;
+    date: string;
+}
+
+export interface NRBRate {
+    currency: {
+        iso3: string;
+        name: string;
+        unit: number;
+    };
+    buy: string | number;
+    sell: string | number;
+}
