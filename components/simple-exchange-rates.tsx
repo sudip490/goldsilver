@@ -25,8 +25,6 @@ export function SimpleExchangeRates({ rates, lastUpdated }: SimpleExchangeRatesP
             return a.localeCompare(b);
         });
 
-    console.log("SimpleExchangeRates received:", rates, "Sorted:", sortedCurrencies);
-
     return (
         <Card className="w-full">
             <CardHeader className="flex flex-row items-center justify-between pb-2">

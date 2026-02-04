@@ -24,9 +24,16 @@ export function NepalMarketTable({ rates }: NepalMarketTableProps) {
     return (
         <Card className="w-full mt-6">
             <CardHeader className="pb-3 border-b bg-muted/20">
-                <CardTitle className="text-lg font-bold flex items-center gap-2">
-                    <span className="text-2xl">🇳🇵</span> Nepal Market Official Rates
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg font-bold flex items-center gap-2">
+                        <span className="text-2xl">🇳🇵</span> Nepal Market Official Rates
+                    </CardTitle>
+                    {rates.length > 0 && (
+                        <span className="text-xs text-muted-foreground">
+                            Updated: {rates[0].date}
+                        </span>
+                    )}
+                </div>
             </CardHeader>
             <CardContent className="p-0">
                 <div className="overflow-x-auto">

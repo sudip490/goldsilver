@@ -8,7 +8,7 @@ export async function fetchGoldPriceOrgData(): Promise<any> {
         const response = await fetch(
             `${API_CONFIG.goldPrice.baseUrl}/${API_CONFIG.goldPrice.baseCurrency}`,
             {
-                next: { revalidate: 300 }, // Cache for 5 minutes
+                next: { revalidate: 10 }, // Cache for 5 minutes
             }
         );
 
@@ -182,14 +182,13 @@ export async function fetchAsheshRates(): Promise<any[] | null> {
         console.log("[Ashesh] Fetching latest rates from charts...");
         const ratesList: any[] = [];
         const today = new Date().toISOString().split('T')[0];
-        const agent = new (require('https').Agent)({ rejectUnauthorized: false });
 
         // Helper to fetch price from chart
         // Types: 0=Fine Gold, 1=Tejabi Gold, 2=Silver
         // Units: tola, gram
         const getPrice = async (type: number, unit: string) => {
             const url = `https://www.ashesh.com.np/gold/chart.php?api=506&unit=${unit}&type=${type}&range=30&v=3`;
-            const res = await fetch(url, { next: { revalidate: 3600 }, agent: agent } as any);
+            const res = await fetch(url, { next: { revalidate: 300 } }); // 5 minutes cache
             const html = await res.text();
             const dataMatch = html.match(/data: \[([\s\S]*?)\]/);
             if (dataMatch) {
@@ -257,9 +256,7 @@ export async function fetchAsheshHistory(type: 0 | 2 = 0): Promise<import("./typ
         const url = `https://www.ashesh.com.np/gold/chart.php?api=506&unit=tola&type=${type}&range=30&v=3`;
 
         const response = await fetch(url, {
-            next: { revalidate: 7200 }, // Cache for 2 hours
-            // @ts-ignore
-            agent: new (require('https').Agent)({ rejectUnauthorized: false })
+            next: { revalidate: 300 }, // Cache for 5 minutes (same as other data)
         });
 
         if (!response.ok) throw new Error("Failed to fetch Ashesh chart");
@@ -1029,6 +1026,34 @@ export async function fetchAllMetalPrices(): Promise<{
             low24h: singaporeSilverPrice * 0.995,
         });
 
+        // Add today's current price to history if not already there
+        const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+
+        // Get today's Nepal gold price (Fine Gold Tola)
+        const todayGoldPrice = asheshRates?.find(r => r.key === 'fine-gold-tola')?.price;
+        const todaySilverPrice = asheshRates?.find(r => r.key === 'silver-tola')?.price;
+
+        // Add today's price to gold history if we have it and it's not already there
+        if (todayGoldPrice && !goldHistory.some(h => h.date === today)) {
+            goldHistory.push({
+                date: today,
+                price: todayGoldPrice
+            });
+            console.log(`[History] Added today's gold price: ${todayGoldPrice} NPR on ${today}`);
+        }
+
+        // Add today's price to silver history if we have it and it's not already there
+        if (todaySilverPrice && !silverHistory.some(h => h.date === today)) {
+            silverHistory.push({
+                date: today,
+                price: todaySilverPrice
+            });
+            console.log(`[History] Added today's silver price: ${todaySilverPrice} NPR on ${today}`);
+        }
+
+        // Sort histories by date
+        goldHistory.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        silverHistory.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
         return {
             prices,
@@ -1119,24 +1144,33 @@ export async function fetchGoldSilverNews(): Promise<any[]> {
                     // Skip if we've seen this title
                     if (seenTitles.has(title)) return;
 
-                    // More specific gold/silver keywords to avoid false matches
+                    // Broader gold/silver keywords
                     const goldKeywords = [
-                        'सुनको मूल्य', 'सुनको भाउ', 'चाँदीको मूल्य', 'चाँदीको भाउ',
-                        'gold price', 'silver price', 'gold loan', 'गोल्ड लोन',
-                        'बुलियन', 'सुन चाँदी', 'gold market', 'silver market'
+                        'सुन', 'चाँदी', 'सुनको', 'चाँदीको',
+                        'सुनको मूल्य', 'सुनको भाउ', 'सुन तोलामा', 'सुन धितो',
+                        'चाँदीको मूल्य', 'चाँदीको भाउ',
+                        'gold', 'silver', 'gold price', 'silver price',
+                        'gold loan', 'गोल्ड लोन', 'बुलियन',
+                        'सुन चाँदी', 'सुन बढ्यो', 'सुन घट्यो'
                     ];
 
                     const hasGoldKeyword = goldKeywords.some(keyword =>
                         title.toLowerCase().includes(keyword.toLowerCase())
                     );
 
-                    // Exclude false matches (like Sunsari district)
-                    const excludeKeywords = ['सुनसरी', 'sunsari', 'मतदाता', 'उम्मेद्वार'];
+                    // Exclude false matches
+                    const excludeKeywords = [
+                        'सुनसरी', 'sunsari', 'मतदाता', 'उम्मेद्वार',
+                        'बिजनेस विशेष', 'ताजा समाचार', 'breaking'
+                    ];
                     const hasExcludeKeyword = excludeKeywords.some(keyword =>
                         title.toLowerCase().includes(keyword.toLowerCase())
                     );
 
-                    if (title && title.length > 10 && hasGoldKeyword && !hasExcludeKeyword) {
+                    // Basic validation - not too strict
+                    const isValid = title && title.length > 10 && !seenTitles.has(title);
+
+                    if (isValid && hasGoldKeyword && !hasExcludeKeyword) {
                         seenTitles.add(title);
                         allNews.push({
                             id: `nepal-${allNews.length}`,
@@ -1177,23 +1211,29 @@ export async function fetchGoldSilverNews(): Promise<any[]> {
                         if (seenTitles.has(title)) return;
 
                         const goldKeywords = [
-                            'सुनको मूल्य', 'सुनको भाउ', 'चाँदीको मूल्य', 'चाँदीको भाउ',
-                            'gold price', 'silver price', 'gold loan', 'गोल्ड लोन'
+                            'सुन', 'चाँदी', 'सुनको', 'चाँदीको',
+                            'सुनको मूल्य', 'सुनको भाउ', 'सुन तोलामा',
+                            'gold', 'silver', 'gold price', 'silver price', 'gold loan', 'गोल्ड लोन'
                         ];
                         const hasGoldKeyword = goldKeywords.some(keyword =>
                             title.toLowerCase().includes(keyword.toLowerCase())
                         );
 
-                        const excludeKeywords = ['सुनसरी', 'sunsari'];
+                        const excludeKeywords = [
+                            'सुनसरी', 'sunsari', 'बिजनेस विशेष', 'ताजा समाचार'
+                        ];
                         const hasExcludeKeyword = excludeKeywords.some(keyword =>
                             title.toLowerCase().includes(keyword.toLowerCase())
                         );
 
-                        if (title && title.length > 10 && hasGoldKeyword && !hasExcludeKeyword) {
-                            seenTitles.add(title);
+                        const cleanTitle = title.replace(/\s+/g, ' ').trim();
+                        const isValid = cleanTitle.length > 10;
+
+                        if (cleanTitle && isValid && hasGoldKeyword && !hasExcludeKeyword) {
+                            seenTitles.add(cleanTitle);
                             allNews.push({
                                 id: `nepal-biz-${allNews.length}`,
-                                title: title,
+                                title: cleanTitle,
                                 summary: summary || title,
                                 url: link?.startsWith('http') ? link : `https://www.onlinekhabar.com${link || '/business'}`,
                                 source: 'OnlineKhabar Business',
@@ -1208,153 +1248,20 @@ export async function fetchGoldSilverNews(): Promise<any[]> {
             }
         }
 
-        // If we got some real news, supplement with curated news if needed
+        // Return only real scraped news from OnlineKhabar
         if (allNews.length > 0) {
             console.log(`[News] Successfully fetched ${allNews.length} real news articles from OnlineKhabar`);
-
-            // If we have less than 8 articles, add some curated Nepal gold news
-            if (allNews.length < 8) {
-                console.log(`[News] Adding curated news to reach minimum of 8 articles...`);
-                const now = new Date();
-                const curatedNews = [
-                    {
-                        id: 'curated-1',
-                        title: 'आजको सुनको मूल्य: नेपाल बजार अपडेट',
-                        summary: 'नेपाल सुन चाँदी व्यवसायी महासंघबाट प्रकाशित आजको आधिकारिक सुन र चाँदीको मूल्य। फाइन गोल्ड र तेजाबी सुनको दैनिक भाउ।',
-                        url: 'https://www.onlinekhabar.com/business',
-                        source: 'OnlineKhabar Business',
-                        publishedAt: new Date(now.getTime() - 1 * 3600000).toISOString(),
-                        category: 'Nepal'
-                    },
-                    {
-                        id: 'curated-2',
-                        title: 'नेपालमा सुनको माग र आपूर्ति: बजार विश्लेषण',
-                        summary: 'चाडपर्व र विवाह सिजनमा सुनको मागमा वृद्धि। स्थानीय बजारमा आयातित र स्थानीय सुनको उपलब्धता र मूल्य प्रवृत्ति।',
-                        url: 'https://www.onlinekhabar.com/',
-                        source: 'OnlineKhabar',
-                        publishedAt: new Date(now.getTime() - 3 * 3600000).toISOString(),
-                        category: 'Nepal'
-                    },
-                    {
-                        id: 'curated-3',
-                        title: 'सुन किन्दा ध्यान दिनुपर्ने कुराहरू',
-                        summary: 'सुन खरिद गर्दा शुद्धता, हलमार्क, र मूल्य निर्धारणमा ध्यान दिनुपर्ने महत्वपूर्ण बुँदाहरू। उपभोक्ता अधिकार र सुरक्षा।',
-                        url: 'https://www.onlinekhabar.com/business',
-                        source: 'OnlineKhabar Business',
-                        publishedAt: new Date(now.getTime() - 5 * 3600000).toISOString(),
-                        category: 'Nepal'
-                    },
-                    {
-                        id: 'curated-4',
-                        title: 'अन्तर्राष्ट्रिय बजारले नेपालको सुनको मूल्यमा पार्ने प्रभाव',
-                        summary: 'विश्व बजारमा सुनको मूल्य परिवर्तनले नेपाली बजारमा कसरी असर गर्छ। विनिमय दर र आयात शुल्कको भूमिका।',
-                        url: 'https://www.onlinekhabar.com/',
-                        source: 'OnlineKhabar',
-                        publishedAt: new Date(now.getTime() - 7 * 3600000).toISOString(),
-                        category: 'Nepal'
-                    },
-                    {
-                        id: 'curated-5',
-                        title: 'सुन बचत योजना: बैंक र वित्तीय संस्थाको प्रस्ताव',
-                        summary: 'विभिन्न बैंक र वित्तीय संस्थाहरूले ल्याएका सुन बचत योजना र सुन ऋण सुविधाहरूको जानकारी।',
-                        url: 'https://www.onlinekhabar.com/business',
-                        source: 'OnlineKhabar Business',
-                        publishedAt: new Date(now.getTime() - 9 * 3600000).toISOString(),
-                        category: 'Nepal'
-                    },
-                    {
-                        id: 'curated-6',
-                        title: 'चाँदीको बजार: औद्योगिक र लगानी माग',
-                        summary: 'नेपालमा चाँदीको बजार अवस्था, औद्योगिक प्रयोग र लगानीकर्ताहरूको रुचि। सुनको तुलनामा चाँदीको मूल्य प्रवृत्ति।',
-                        url: 'https://www.onlinekhabar.com/',
-                        source: 'OnlineKhabar',
-                        publishedAt: new Date(now.getTime() - 11 * 3600000).toISOString(),
-                        category: 'Nepal'
-                    },
-                    {
-                        id: 'curated-7',
-                        title: 'नेपाल राष्ट्र बैंकको विनिमय दर र सुनको मूल्य',
-                        summary: 'एनआरबीको दैनिक विनिमय दरले स्थानीय सुन र चाँदीको मूल्यमा पार्ने प्रत्यक्ष प्रभाव। व्यापारीहरूको मूल्य निर्धारण प्रक्रिया।',
-                        url: 'https://www.nrb.org.np/forex/',
-                        source: 'Nepal Rastra Bank',
-                        publishedAt: new Date(now.getTime() - 13 * 3600000).toISOString(),
-                        category: 'Nepal'
-                    }
-                ];
-
-                // Add curated news until we have 8 total
-                const needed = 8 - allNews.length;
-                allNews.push(...curatedNews.slice(0, needed));
-            }
-
-            return allNews.slice(0, 10);
+            return allNews.slice(0, 10); // Return up to 10 real articles
         }
 
-        // Fallback: Nepal market news
-        console.log("[News] Using fallback Nepal market news...");
-        const now = new Date();
-        return [
-            {
-                id: 'nepal-1',
-                title: 'नेपाल सुन बजार: स्थिर व्यापारिक गतिविधि',
-                summary: 'स्थानीय सुन व्यापारीहरूले अन्तर्राष्ट्रिय बजारसँग मिल्दो मूल्यमा स्थिर माग रिपोर्ट गर्छन्। नेपाल राष्ट्र बैंकले पारदर्शी मूल्य निर्धारणका लागि दैनिक आधिकारिक विनिमय दर प्रदान गर्दछ।',
-                url: 'https://www.onlinekhabar.com/business',
-                source: 'OnlineKhabar',
-                publishedAt: now.toISOString(),
-                category: 'Nepal'
-            },
-            {
-                id: 'nepal-2',
-                title: 'नेपाली रुपैयाँ विनिमय दरले स्थानीय सुनको मूल्यलाई प्रभाव पार्छ',
-                summary: 'नेपाल राष्ट्र बैंकबाट दैनिक एनपीआर विनिमय दर उतारचढावले स्थानीय सुन र चाँदीको मूल्यलाई प्रत्यक्ष असर गर्छ। व्यापारीहरूले आधिकारिक विदेशी मुद्रा डाटाको आधारमा दरहरू समायोजन गर्छन्।',
-                url: 'https://www.nrb.org.np/forex/',
-                source: 'Nepal Rastra Bank',
-                publishedAt: new Date(now.getTime() - 3 * 3600000).toISOString(),
-                category: 'Nepal'
-            },
-            {
-                id: 'nepal-3',
-                title: 'नेपाल बजारमा फाइन गोल्ड र तेजाबी सुनको मूल्य भिन्नता',
-                summary: 'नेपाल बजारले फाइन गोल्ड (९९.९% शुद्धता) र तेजाबी सुनको लागि फरक मूल्य निर्धारण कायम राख्छ। उपभोक्ताहरूले आफ्नो प्राथमिकता र बजेटको आधारमा छनौट गर्न सक्छन्।',
-                url: 'https://www.ashesh.com.np/gold/',
-                source: 'Nepal Market',
-                publishedAt: new Date(now.getTime() - 6 * 3600000).toISOString(),
-                category: 'Nepal'
-            },
-            {
-                id: 'nepal-4',
-                title: 'सुन चाँदीको मूल्य अपडेट',
-                summary: 'आजको सुन र चाँदीको ताजा मूल्य जानकारी। नेपाल सुन चाँदी व्यवसायी महासंघबाट प्रकाशित आधिकारिक दर।',
-                url: 'https://www.onlinekhabar.com/business',
-                source: 'OnlineKhabar Business',
-                publishedAt: new Date(now.getTime() - 9 * 3600000).toISOString(),
-                category: 'Nepal'
-            },
-            {
-                id: 'nepal-5',
-                title: 'नेपालमा सुनको माग र आपूर्ति',
-                summary: 'चाडपर्व र विवाह सिजनमा सुनको मागमा वृद्धि। स्थानीय बजारमा आयातित र स्थानीय सुनको उपलब्धता।',
-                url: 'https://www.onlinekhabar.com/',
-                source: 'OnlineKhabar',
-                publishedAt: new Date(now.getTime() - 12 * 3600000).toISOString(),
-                category: 'Nepal'
-            }
-        ];
+        // If no news found, return empty array
+        console.log("[News] No gold/silver news found on OnlineKhabar");
+        return [];
 
     } catch (error) {
         console.error('[News] Error in news fetching:', error);
 
-        // Minimal fallback
-        return [
-            {
-                id: 'fallback-1',
-                title: 'सुन चाँदी बजार समाचार',
-                summary: 'नेपालको सुन र चाँदी बजारको ताजा जानकारी।',
-                url: 'https://www.onlinekhabar.com/business',
-                source: 'OnlineKhabar',
-                publishedAt: new Date().toISOString(),
-                category: 'Nepal'
-            }
-        ];
+        // Return empty array on error
+        return [];
     }
 }

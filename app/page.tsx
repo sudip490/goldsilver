@@ -12,7 +12,6 @@ import { NepalMarketTable } from "@/components/nepal-market-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { MetalPrice, CountryData } from "@/lib/types";
-import { generateMockHistory } from "@/lib/mock-data";
 import { TrendingUp, Sparkles, Globe, Newspaper, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -45,6 +44,7 @@ export default function Home() {
             setRates(data.rates || {});
             setNrbRates(data.nrbRates || []);
             if (data.nepalRates) {
+                console.log('[Nepal Rates] Updated:', data.nepalRates.length, 'rates', 'Date:', data.nepalRates[0]?.date);
                 setNepalRates(data.nepalRates);
             }
             if (data.goldHistory && data.silverHistory) {
@@ -85,14 +85,9 @@ export default function Home() {
     // Get other country prices
     const otherPrices = metalPrices.filter((p) => p.country !== "Nepal");
 
-    // Historical data
-    const goldHistory = historyData.gold.length > 0
-        ? historyData.gold
-        : generateMockHistory(nepalGold?.price || 290000, 0.015);
-
-    const silverHistory = historyData.silver.length > 0
-        ? historyData.silver
-        : generateMockHistory(nepalSilver?.price || 5300, 0.025);
+    // Historical data - always use real data from API
+    const goldHistory = historyData.gold.length > 0 ? historyData.gold : [];
+    const silverHistory = historyData.silver.length > 0 ? historyData.silver : [];
 
     if (loading && metalPrices.length === 0) {
         return (
@@ -177,7 +172,9 @@ export default function Home() {
                             </div>
                         </div>
                         <div className="mt-2 text-xs text-muted-foreground">
-                            Gold & silver rate updated on <span className="font-medium text-foreground">03 Feb 2026</span>
+                            Gold & silver rate updated on <span className="font-medium text-foreground">
+                                {nepalRates.length > 0 ? new Date(nepalRates[0].date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Loading...'}
+                            </span>
                         </div>
                     </div>
                 </section>
