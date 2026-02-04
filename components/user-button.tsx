@@ -12,8 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { LoginDialog } from "@/components/login-dialog";
 import { authClient } from "@/lib/auth-client";
-import { Loader2, LogOut, User } from "lucide-react";
-import Link from "next/link";
+import { Loader2, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 

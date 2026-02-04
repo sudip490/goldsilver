@@ -6,7 +6,6 @@ import { CountryPriceTable } from "@/components/country-price-table";
 import { PriceChart } from "@/components/price-chart";
 import { NewsList } from "@/components/news-list";
 import { SimpleExchangeRates } from "@/components/simple-exchange-rates";
-import { NRBRatesTable } from "@/components/nrb-rates-table";
 import { NRBRatesCards } from "@/components/nrb-rates-cards";
 import { NepalMarketTable } from "@/components/nepal-market-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";

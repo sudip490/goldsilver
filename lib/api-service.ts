@@ -1,9 +1,9 @@
-import { MetalPrice, CountryData } from "./types";
+import { MetalPrice, CountryData, NRBRawRate, GoldPriceOrgData } from "./types";
 import { API_CONFIG, CURRENCY_TO_NPR, UNIT_CONVERSIONS } from "./api-config";
-import * as cheerio from 'cheerio';
+import * as cheerio from "cheerio";
 
 // Fetch gold and silver prices from GoldPrice.org API
-export async function fetchGoldPriceOrgData(): Promise<any> {
+export async function fetchGoldPriceOrgData(): Promise<GoldPriceOrgData | null> {
     try {
         const response = await fetch(
             `${API_CONFIG.goldPrice.baseUrl}/${API_CONFIG.goldPrice.baseCurrency}`,
@@ -16,7 +16,7 @@ export async function fetchGoldPriceOrgData(): Promise<any> {
             throw new Error("Failed to fetch from GoldPrice.org");
         }
 
-        const data = await response.json();
+        const data = await response.json() as GoldPriceOrgData;
         return data;
     } catch (error) {
         console.error("Error fetching from GoldPrice.org:", error);
@@ -34,7 +34,7 @@ async function fetchNRBRates(): Promise<Record<string, number>> {
         }
 
         // Find USD rate first (handling unit if not 1, though USD is usually 1)
-        const usdData = rawRates.find((r: any) => r.currency.iso3 === "USD");
+        const usdData = rawRates.find((r: NRBRawRate) => r.currency.iso3 === "USD");
         if (!usdData) throw new Error("USD rate missing in NRB response");
 
         const usdBuyNPR = parseFloat(usdData.buy) / (usdData.currency.unit || 1);
@@ -49,7 +49,7 @@ async function fetchNRBRates(): Promise<Record<string, number>> {
         rates["NPR"] = usdBuyNPR;
         rates["USD"] = 1;
 
-        rawRates.forEach((rate: any) => {
+        rawRates.forEach((rate: NRBRawRate) => {
             const code = rate.currency.iso3;
             if (code === "USD") return;
 
@@ -63,14 +63,14 @@ async function fetchNRBRates(): Promise<Record<string, number>> {
         console.log(`[NRB] Processed ${Object.keys(rates).length} rates from raw data`);
         return rates;
 
-    } catch (error: any) {
-        console.error("Error fetching NRB rates:", error.message);
+    } catch (error) {
+        console.error("Error fetching NRB rates:", error instanceof Error ? error.message : String(error));
         return {};
     }
 }
 
 // Fetch raw NRB rates for detailed table display
-export async function fetchNRBRatesRaw() {
+export async function fetchNRBRatesRaw(): Promise<NRBRawRate[]> {
     try {
         const today = new Date().toISOString().split('T')[0];
 
@@ -81,11 +81,20 @@ export async function fetchNRBRatesRaw() {
             { next: { revalidate: 60 } }
         );
 
-        let rates = [];
+        let rates: NRBRawRate[] = [];
 
         if (response.ok) {
             const json = await response.json();
-            rates = json.data?.payload?.rates || [];
+            const apiRates = json.data?.payload?.rates || [];
+            rates = apiRates.map((r: { currency: { iso3: string; name: string; unit: number }; buy: string | number; sell: string | number }) => ({
+                currency: {
+                    iso3: r.currency.iso3,
+                    name: r.currency.name,
+                    unit: r.currency.unit
+                },
+                buy: String(r.buy),
+                sell: String(r.sell)
+            }));
         }
 
         if (rates.length > 0) {
@@ -97,15 +106,15 @@ export async function fetchNRBRatesRaw() {
         console.log("[NRB] API returned no data, switching to scraping...");
         const scrapeResponse = await fetch("https://www.nrb.org.np/forex/", {
             next: { revalidate: 300 },
-            // @ts-ignore
-            agent: new (require('https').Agent)({ rejectUnauthorized: false }) // Ignore SSL for scraping
+            // @ts-expect-error - Node.js https agent not available in Edge runtime
+            agent: new (await import('https')).Agent({ rejectUnauthorized: false })
         });
 
         if (!scrapeResponse.ok) throw new Error("Failed to fetch NRB HTML");
 
         const html = await scrapeResponse.text();
         const $ = cheerio.load(html);
-        const scrapedRates: any[] = [];
+        const scrapedRates: Array<{ currency: { iso3: string; name: string; unit: number }; buy: string; sell: string }> = [];
 
         // Adjust selector based on actual NRB site structure
         // Look for the main forex table
@@ -277,12 +286,7 @@ export async function fetchAsheshHistory(type: 0 | 2 = 0): Promise<import("./typ
             let match;
 
             while ((match = regex.exec(dataMatch[1])) !== null) {
-                const [_, year, month, day, price] = match;
-                // JS Date month is 0-indexed, but day usually 1-indexed in Date constructor.
-                // However, let's verify format. "new Date(2026,1,03)" = Feb 3, 2026.
-                // date.toISOString().split("T")[0] format is YYYY-MM-DD
-
-                const dateObj = new Date(parseInt(year), parseInt(month), parseInt(day));
+                const [, year, month, day, price] = match;
                 // Adjust for timezone offset if needed, or just use YYYY-MM-DD string construction manually to avoid TZ issues
                 const monthStr = (parseInt(month) + 1).toString().padStart(2, '0');
                 const dayStr = parseInt(day).toString().padStart(2, '0');
@@ -501,7 +505,7 @@ export async function fetchAllMetalPrices(): Promise<{
             const silverPrevClose = getPrevClose(silverHistory);
 
             // Update rates with ACTUAL changes from history if available, else Theoretical
-            asheshRates.forEach((rate: any) => {
+            asheshRates.forEach((rate: import("./types").NepalRate) => {
                 let prevPrice = 0;
 
                 // Determine previous price for this specific unit
@@ -535,14 +539,14 @@ export async function fetchAllMetalPrices(): Promise<{
                 }
             });
 
-            const fineGoldTola = asheshRates.find((r: any) => r.name === "Fine Gold" && r.unit === "Tola");
+            const fineGoldTola = asheshRates.find((r: import("./types").NepalRate) => r.name === "Fine Gold" && r.unit === "Tola");
             if (fineGoldTola) {
                 nepalGoldPrice = fineGoldTola.price;
                 nepalGoldChange = fineGoldTola.change || 0;
                 nepalGoldChangePercent = fineGoldTola.changePercent || 0;
             }
 
-            const silverTolaItem = asheshRates.find((r: any) => r.name === "Silver" && r.unit === "Tola");
+            const silverTolaItem = asheshRates.find((r: import("./types").NepalRate) => r.name === "Silver" && r.unit === "Tola");
             if (silverTolaItem) {
                 nepalSilverPrice = silverTolaItem.price;
                 nepalSilverChange = silverTolaItem.change || 0;
@@ -567,7 +571,7 @@ export async function fetchAllMetalPrices(): Promise<{
         });
 
         // Add 10g Gold if available in scraped data
-        const gold10g = asheshRates?.find((r: any) => r.name === "Fine Gold" && r.unit === "10 Gram");
+        const gold10g = asheshRates?.find((r: import("./types").NepalRate) => r.name === "Fine Gold" && r.unit === "10 Gram");
         if (gold10g) {
             prices.push({
                 id: "np-gold-10g",
@@ -601,7 +605,7 @@ export async function fetchAllMetalPrices(): Promise<{
             low24h: nepalSilverPrice,
         });
 
-        const silver10g = asheshRates?.find((r: any) => r.name === "Silver" && r.unit === "10 Gram");
+        const silver10g = asheshRates?.find((r: import("./types").NepalRate) => r.name === "Silver" && r.unit === "10 Gram");
         if (silver10g) {
             prices.push({
                 id: "np-silver-10g",
@@ -1111,8 +1115,8 @@ export function generateCountryData(prices: MetalPrice[]): CountryData[] {
 
 // Fetch real gold and silver news from OnlineKhabar only
 // Refreshes every 5 minutes to get latest news
-export async function fetchGoldSilverNews(): Promise<any[]> {
-    const allNews: any[] = [];
+export async function fetchGoldSilverNews(): Promise<import("./types").NewsItem[]> {
+    const allNews: import("./types").NewsItem[] = [];
 
     try {
         console.log("[News] Fetching latest gold news from OnlineKhabar...");
@@ -1175,6 +1179,7 @@ export async function fetchGoldSilverNews(): Promise<any[]> {
                         allNews.push({
                             id: `nepal-${allNews.length}`,
                             title: title,
+                            description: summary || title,
                             summary: summary || title,
                             url: link?.startsWith('http') ? link : `https://www.onlinekhabar.com${link || ''}`,
                             source: 'OnlineKhabar Nepal',
@@ -1234,6 +1239,7 @@ export async function fetchGoldSilverNews(): Promise<any[]> {
                             allNews.push({
                                 id: `nepal-biz-${allNews.length}`,
                                 title: cleanTitle,
+                                description: summary || title,
                                 summary: summary || title,
                                 url: link?.startsWith('http') ? link : `https://www.onlinekhabar.com${link || '/business'}`,
                                 source: 'OnlineKhabar Business',

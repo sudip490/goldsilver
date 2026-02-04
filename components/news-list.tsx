@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NewsItem } from "@/lib/types";
-import { formatDate, formatTime } from "@/lib/utils";
+import { formatTime } from "@/lib/utils";
 import { ExternalLink, Clock } from "lucide-react";
 
 interface NewsListProps {

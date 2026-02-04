@@ -14,11 +14,8 @@ interface PortfolioClientProps {
 
 export function PortfolioClient({ initialRates, initialHistory }: PortfolioClientProps) {
     const [transactions, setTransactions] = useState<PortfolioTransaction[]>([]);
-    const [rates, setRates] = useState(initialRates);
-    const [history, setHistory] = useState(initialHistory);
-    // Remove individual rateDate state as it's part of rates now
-    const [loading, setLoading] = useState(false); // No longer loading initial data
-    const [showAddForm, setShowAddForm] = useState(false);
+    const rates = initialRates;
+    const history = initialHistory;
 
     // Form State
     const [formData, setFormData] = useState<Partial<PortfolioTransaction>>({
@@ -34,7 +31,7 @@ export function PortfolioClient({ initialRates, initialHistory }: PortfolioClien
         // Load transactions from local storage
         const saved = localStorage.getItem("portfolio_transactions");
         if (saved) {
-            try { setTransactions(JSON.parse(saved)); } catch (e) { }
+            try { setTransactions(JSON.parse(saved)); } catch { /* ignore parse errors */ }
         }
     }, []);
 
@@ -69,7 +66,6 @@ export function PortfolioClient({ initialRates, initialHistory }: PortfolioClien
         };
 
         setTransactions([newTx, ...transactions]);
-        setShowAddForm(false);
         // Reset form slightly
         setFormData({ ...formData, price: undefined, rate: undefined, notes: '' });
     };
@@ -224,7 +220,7 @@ export function PortfolioClient({ initialRates, initialHistory }: PortfolioClien
                                             <select
                                                 className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
                                                 value={formData.type}
-                                                onChange={e => setFormData({ ...formData, type: e.target.value as any })}
+                                                onChange={e => setFormData({ ...formData, type: e.target.value as 'buy' | 'sell' })}
                                             >
                                                 <option value="buy">Buy</option>
                                                 <option value="sell">Sell</option>
@@ -235,7 +231,7 @@ export function PortfolioClient({ initialRates, initialHistory }: PortfolioClien
                                             <select
                                                 className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
                                                 value={formData.metal}
-                                                onChange={e => setFormData({ ...formData, metal: e.target.value as any })}
+                                                onChange={e => setFormData({ ...formData, metal: e.target.value as 'gold' | 'silver' })}
                                             >
                                                 <option value="gold">Gold</option>
                                                 <option value="silver">Silver</option>
@@ -259,7 +255,7 @@ export function PortfolioClient({ initialRates, initialHistory }: PortfolioClien
                                             <select
                                                 className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
                                                 value={formData.unit}
-                                                onChange={e => setFormData({ ...formData, unit: e.target.value as any })}
+                                                onChange={e => setFormData({ ...formData, unit: e.target.value as 'tola' | 'gram' })}
                                             >
                                                 <option value="tola">Tola</option>
                                                 <option value="gram">Gram</option>

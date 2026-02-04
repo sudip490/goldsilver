@@ -41,6 +41,8 @@ export interface NewsItem {
     publishedAt: string;
     url: string;
     imageUrl?: string;
+    category?: string;
+    summary?: string;
 }
 
 export interface PortfolioTransaction {
@@ -73,4 +75,29 @@ export interface NRBRate {
     };
     buy: string | number;
     sell: string | number;
+}
+
+export interface NRBRawRate {
+    currency: {
+        iso3: string;
+        name: string;
+        unit: number;
+    };
+    buy: string;
+    sell: string;
+}
+
+export interface GoldPriceOrgData {
+    items: Array<{
+        curr: string;
+        xauPrice: number;
+        xagPrice: number;
+        chgXau: number;
+        chgXag: number;
+        pcXau: number;
+        pcXag: number;
+        xauClose: number;
+        xagClose: number;
+        [key: string]: unknown;
+    }>;
 }
