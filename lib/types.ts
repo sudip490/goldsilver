@@ -42,3 +42,15 @@ export interface NewsItem {
     url: string;
     imageUrl?: string;
 }
+
+export interface PortfolioTransaction {
+    id: string;
+    type: 'buy' | 'sell';
+    metal: 'gold' | 'silver';
+    unit: 'tola' | 'gram';
+    quantity: number;
+    price: number; // Total price paid/received
+    rate: number; // Rate per unit at that time
+    date: string;
+    notes?: string;
+}

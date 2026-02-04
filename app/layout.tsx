@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Header } from "@/components/header";
+import { RefreshProvider } from "@/contexts/refresh-context";
+import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -26,10 +30,23 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en">
+        <html lang="en" suppressHydrationWarning>
             <body className={inter.className}>
-                {children}
-                <Analytics />
+                <ThemeProvider
+                    attribute="class"
+                    defaultTheme="system"
+                    enableSystem
+                    disableTransitionOnChange
+                >
+                    <RefreshProvider>
+                        <Header />
+                        <div className="pt-16">
+                            {children}
+                        </div>
+                    </RefreshProvider>
+                    <Analytics />
+                    <SpeedInsights />
+                </ThemeProvider>
             </body>
         </html>
     );
