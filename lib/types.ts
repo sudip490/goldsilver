@@ -42,3 +42,35 @@ export interface NewsItem {
     url: string;
     imageUrl?: string;
 }
+
+export interface PortfolioTransaction {
+    id: string;
+    type: 'buy' | 'sell';
+    metal: 'gold' | 'silver';
+    unit: 'tola' | 'gram';
+    quantity: number;
+    price: number; // Total price paid/received
+    rate: number; // Rate per unit at that time
+    date: string;
+    notes?: string;
+}
+
+export interface NepalRate {
+    key: string;
+    name: string;
+    unit: string;
+    price: number;
+    change?: number;
+    changePercent?: number;
+    date: string;
+}
+
+export interface NRBRate {
+    currency: {
+        iso3: string;
+        name: string;
+        unit: number;
+    };
+    buy: string | number;
+    sell: string | number;
+}

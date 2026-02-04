@@ -177,10 +177,10 @@ export async function fetchNRBRatesRaw() {
 }
 
 // Fetch latest rates from Ashesh.com.np (using chart API as reliable source)
-export async function fetchAsheshRates(): Promise<any[] | null> {
+export async function fetchAsheshRates(): Promise<import("./types").NepalRate[] | null> {
     try {
         console.log("[Ashesh] Fetching latest rates from charts...");
-        const ratesList: any[] = [];
+        const ratesList: import("./types").NepalRate[] = [];
         const today = new Date().toISOString().split('T')[0];
 
         // Helper to fetch price from chart
@@ -442,7 +442,7 @@ export function convertSilverPrice(
 export async function fetchAllMetalPrices(): Promise<{
     prices: MetalPrice[],
     rates: Record<string, number>,
-    nepalRates: any[],
+    nepalRates: import("./types").NepalRate[],
     goldHistory: import("./types").PriceHistory[],
     silverHistory: import("./types").PriceHistory[]
 }> {
