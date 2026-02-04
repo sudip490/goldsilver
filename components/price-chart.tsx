@@ -64,7 +64,7 @@ export function PriceChart({
                                     borderRadius: "var(--radius)",
                                 }}
                                 labelStyle={{ color: "hsl(var(--foreground))" }}
-                                formatter={(value: any) =>
+                                formatter={(value: number) =>
                                     value !== undefined
                                         ? new Intl.NumberFormat("en-NP", {
                                             style: "currency",
