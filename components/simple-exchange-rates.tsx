@@ -8,7 +8,7 @@ interface SimpleExchangeRatesProps {
     lastUpdated: string;
 }
 
-export function SimpleExchangeRates({ rates, lastUpdated }: SimpleExchangeRatesProps) {
+export function SimpleExchangeRates({ rates }: SimpleExchangeRatesProps) {
     if (!rates) return null;
 
     // Filter out USD (since it's base) and sort keys
