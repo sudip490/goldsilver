@@ -45,22 +45,29 @@ export function PortfolioClient({ initialRates, initialHistory }: PortfolioClien
     // 3. Handlers
     const handleAddTransaction = (e: React.FormEvent) => {
         e.preventDefault();
-        const price = Number(formData.price) || 0;
-        const rate = Number(formData.rate) || 0;
-        // If user didn't enter total price, calculate from rate
-        const finalPrice = price > 0 ? price : (rate * (Number(formData.quantity) || 0));
+        const quantity = Number(formData.quantity) || 0;
+        const ratePerTola = Number(formData.rate) || 0;
+        const unit = formData.unit as 'tola' | 'gram';
 
-        // If user didn't enter rate, calculate from price
-        const finalRate = rate > 0 ? rate : (price / (Number(formData.quantity) || 1));
+        // Convert rate based on unit
+        // If unit is gram, convert the Tola rate to per-gram rate
+        const actualRate = unit === 'gram' ? ratePerTola / 11.66 : ratePerTola;
+
+        // Calculate price
+        const price = Number(formData.price) || 0;
+        const finalPrice = price > 0 ? price : (actualRate * quantity);
+
+        // Store the actual rate used (converted if gram)
+        const finalRate = price > 0 ? (price / quantity) : actualRate;
 
         const newTx: PortfolioTransaction = {
             id: Date.now().toString(),
             type: formData.type as 'buy' | 'sell',
             metal: formData.metal as 'gold' | 'silver',
             unit: formData.unit as 'tola' | 'gram',
-            quantity: Number(formData.quantity) || 0,
+            quantity: quantity,
             price: finalPrice,
-            rate: finalRate,
+            rate: finalRate, // This is the actual rate per unit (Tola or Gram)
             date: formData.date || new Date().toISOString(),
             notes: formData.notes || ''
         };
@@ -264,7 +271,8 @@ export function PortfolioClient({ initialRates, initialHistory }: PortfolioClien
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium">Rate per Tola/Unit (NPR)</label>
+                                        <label className="text-sm font-medium">Rate per Tola (NPR)</label>
+                                        <p className="text-xs text-muted-foreground">Always enter rate per Tola. Auto-converts for Gram.</p>
                                         <input
                                             type="number"
                                             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
