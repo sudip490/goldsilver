@@ -22,7 +22,7 @@ export default function LoginPage() {
             setIsLoading(false);
         }
     };
-
+ 
     return (
         <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-yellow-50 via-white to-yellow-100 p-4 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800">
             <div className="w-full max-w-md space-y-8 rounded-2xl bg-white/80 p-8 shadow-2xl backdrop-blur-xl dark:bg-slate-900/80 border border-yellow-200/50 dark:border-yellow-500/10">
