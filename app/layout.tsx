@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Header } from "@/components/header";
+import { GlobalRefreshButton } from "@/components/global-refresh-button";
 import { RefreshProvider } from "@/contexts/refresh-context";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
@@ -40,6 +41,7 @@ export default function RootLayout({
                 >
                     <RefreshProvider>
                         <Header />
+                        <GlobalRefreshButton />
                         <div className="pt-16">
                             {children}
                         </div>

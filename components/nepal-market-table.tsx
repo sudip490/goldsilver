@@ -40,11 +40,11 @@ export function NepalMarketTable({ rates }: NepalMarketTableProps) {
                     <table className="w-full text-sm">
                         <thead>
                             <tr className="border-b bg-muted/50">
-                                <th className="text-left py-3 px-4 font-semibold text-muted-foreground w-[200px]">Metal</th>
-                                <th className="text-left py-3 px-4 font-semibold text-muted-foreground">Unit</th>
-                                <th className="text-right py-3 px-4 font-semibold text-muted-foreground">Price (NPR)</th>
-                                <th className="text-right py-3 px-4 font-semibold text-muted-foreground">Change</th>
-                                <th className="text-right py-3 px-4 font-semibold text-muted-foreground">Date</th>
+                                <th className="text-left py-3 px-2 md:px-4 font-semibold text-muted-foreground w-[200px]">Metal</th>
+                                <th className="text-left py-3 px-2 md:px-4 font-semibold text-muted-foreground">Unit</th>
+                                <th className="text-right py-3 px-2 md:px-4 font-semibold text-muted-foreground">Price (NPR)</th>
+                                <th className="text-right py-3 px-2 md:px-4 font-semibold text-muted-foreground">Change</th>
+                                <th className="text-right py-3 px-2 md:px-4 font-semibold text-muted-foreground">Date</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -53,12 +53,12 @@ export function NepalMarketTable({ rates }: NepalMarketTableProps) {
                                     key={rate.key}
                                     className="border-b last:border-0 hover:bg-muted/30 transition-colors"
                                 >
-                                    <td className="py-3 px-4 font-medium">{rate.name}</td>
-                                    <td className="py-3 px-4 text-muted-foreground">{rate.unit}</td>
-                                    <td className="py-3 px-4 text-right font-bold font-mono text-base">
+                                    <td className="py-3 px-2 md:px-4 font-medium">{rate.name}</td>
+                                    <td className="py-3 px-2 md:px-4 text-muted-foreground">{rate.unit}</td>
+                                    <td className="py-3 px-2 md:px-4 text-right font-bold font-mono text-base">
                                         {formatCurrency(rate.price, "NPR")}
                                     </td>
-                                    <td className="py-3 px-4 text-right">
+                                    <td className="py-3 px-2 md:px-4 text-right">
                                         {rate.change !== undefined && rate.change !== 0 ? (
                                             <div className={`flex items-center justify-end gap-1 ${rate.change > 0 ? "text-green-600" : "text-red-600"}`}>
                                                 {rate.change > 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
@@ -69,7 +69,7 @@ export function NepalMarketTable({ rates }: NepalMarketTableProps) {
                                             <span className="text-muted-foreground">-</span>
                                         )}
                                     </td>
-                                    <td className="py-3 px-4 text-right text-muted-foreground">
+                                    <td className="py-3 px-2 md:px-4 text-right text-muted-foreground whitespace-nowrap">
                                         {rate.date}
                                     </td>
                                 </tr>

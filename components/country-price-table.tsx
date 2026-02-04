@@ -21,11 +21,11 @@ export function CountryPriceTable({ data }: CountryPriceTableProps) {
                     <table className="w-full">
                         <thead>
                             <tr className="border-b">
-                                <th className="text-left py-3 px-4 font-semibold">Country</th>
-                                <th className="text-right py-3 px-4 font-semibold">Gold</th>
-                                <th className="text-right py-3 px-4 font-semibold">Change</th>
-                                <th className="text-right py-3 px-4 font-semibold">Silver</th>
-                                <th className="text-right py-3 px-4 font-semibold">Change</th>
+                                <th className="text-left py-3 px-2 md:px-4 font-semibold">Country</th>
+                                <th className="text-right py-3 px-2 md:px-4 font-semibold">Gold</th>
+                                <th className="text-right py-3 px-2 md:px-4 font-semibold">Change</th>
+                                <th className="text-right py-3 px-2 md:px-4 font-semibold">Silver</th>
+                                <th className="text-right py-3 px-2 md:px-4 font-semibold">Change</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -34,7 +34,7 @@ export function CountryPriceTable({ data }: CountryPriceTableProps) {
                                     key={country.countryCode}
                                     className="border-b last:border-0 hover:bg-muted/50 transition-colors"
                                 >
-                                    <td className="py-3 px-4">
+                                    <td className="py-3 px-2 md:px-4">
                                         <div className="flex items-center gap-2">
                                             <span className="text-2xl">
                                                 {getFlagEmoji(country.countryCode)}
@@ -47,13 +47,13 @@ export function CountryPriceTable({ data }: CountryPriceTableProps) {
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="text-right py-3 px-4 font-semibold">
+                                    <td className="text-right py-3 px-2 md:px-4 font-semibold">
                                         {formatCurrency(country.goldPrice, country.currency)}
                                         <div className="text-xs text-muted-foreground font-normal">
                                             {country.goldUnit}
                                         </div>
                                     </td>
-                                    <td className="text-right py-3 px-4">
+                                    <td className="text-right py-3 px-2 md:px-4">
                                         <div
                                             className={cn(
                                                 "inline-flex items-center gap-1 text-sm font-medium",
@@ -70,13 +70,13 @@ export function CountryPriceTable({ data }: CountryPriceTableProps) {
                                             {formatCurrency(country.goldChangeValue, country.currency)}
                                         </div>
                                     </td>
-                                    <td className="text-right py-3 px-4 font-semibold">
+                                    <td className="text-right py-3 px-2 md:px-4 font-semibold">
                                         {formatCurrency(country.silverPrice, country.currency)}
                                         <div className="text-xs text-muted-foreground font-normal">
                                             {country.silverUnit}
                                         </div>
                                     </td>
-                                    <td className="text-right py-3 px-4">
+                                    <td className="text-right py-3 px-2 md:px-4">
                                         <div
                                             className={cn(
                                                 "inline-flex items-center gap-1 text-sm font-medium",

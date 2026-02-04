@@ -40,7 +40,7 @@ export function PriceChart({
             <CardContent>
                 <div className="h-[300px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={formattedData}>
+                        <LineChart data={formattedData} margin={{ top: 10, right: 30, left: 10, bottom: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                             <XAxis
                                 dataKey="date"

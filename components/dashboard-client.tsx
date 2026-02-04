@@ -24,6 +24,7 @@ interface DashboardClientProps {
         goldHistory: PriceHistory[];
         silverHistory: PriceHistory[];
         news: NewsItem[];
+        timestamp?: string;
     };
 }
 
@@ -42,7 +43,9 @@ export function DashboardClient({ initialData }: DashboardClientProps) {
     // Loading is false initially since we have server data
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+    const [lastUpdated, setLastUpdated] = useState<Date>(
+        initialData.timestamp ? new Date(initialData.timestamp) : new Date()
+    );
 
     const fetchPrices = async () => {
         setLoading(true);
@@ -120,7 +123,7 @@ export function DashboardClient({ initialData }: DashboardClientProps) {
                 </div>
             )}
 
-            <main className="container mx-auto px-4 py-8">
+            <main className="container mx-auto px-3 md:px-4 py-4 md:py-8">
                 {/* Hero Section - Nepal Prices */}
                 <section className="mb-12">
                     <div className="flex items-center gap-2 mb-6">
