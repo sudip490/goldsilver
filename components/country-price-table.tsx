@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CountryData } from "@/lib/types";
-import { formatCurrency, formatPercentage } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 

@@ -2,8 +2,8 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MetalPrice } from "@/lib/types";
-import { formatCurrency, formatPercentage, formatTime } from "@/lib/utils";
-import { TrendingUp, TrendingDown, Clock } from "lucide-react";
+import { formatCurrency, formatTime } from "@/lib/utils";
+import { Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface PriceCardProps {
@@ -13,7 +13,7 @@ interface PriceCardProps {
 
 export function PriceCard({ data, featured = false }: PriceCardProps) {
     const isPositive = data.change >= 0;
-    const metalColor = data.metal === "gold" ? "gold" : "silver";
+
 
     return (
         <Card
