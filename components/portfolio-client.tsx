@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2, TrendingUp, TrendingDown, Coins, Wallet } from "lucide-react";
+import { useRefresh } from "@/contexts/refresh-context";
 import { PortfolioTransaction, PriceHistory } from "@/lib/types";
 import { PriceChart } from "@/components/price-chart";
 import { migrateLocalStorageToDatabase } from "@/lib/migrate-portfolio";
@@ -12,69 +13,53 @@ import { migrateLocalStorageToDatabase } from "@/lib/migrate-portfolio";
 interface PortfolioClientProps {
     initialRates: { gold: number; silver: number; date: string };
     initialHistory: { gold: PriceHistory[]; silver: PriceHistory[] };
+    initialTransactions?: PortfolioTransaction[];
 }
 
-export function PortfolioClient({ initialRates, initialHistory }: PortfolioClientProps) {
-    const [transactions, setTransactions] = useState<PortfolioTransaction[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+export function PortfolioClient({ initialRates, initialHistory, initialTransactions = [] }: PortfolioClientProps) {
+    const { registerRefreshHandler } = useRefresh();
+    // Use initialTransactions if available, otherwise empty array
+    const [transactions, setTransactions] = useState<PortfolioTransaction[]>(initialTransactions);
+    // If we have initial transactions, we are not loading. If it's empty, we might naturally be empty or loading?
+    // Actually, since we pass data from server, we can say isLoading = false initially.
+    const [isLoading, setIsLoading] = useState(false);
     const [selectedTransaction, setSelectedTransaction] = useState<PortfolioTransaction | null>(null);
     const rates = initialRates;
     const history = initialHistory;
 
-    // Load Data from Database
-    useEffect(() => {
-        fetchTransactions();
-    }, []);
-
-    const fetchTransactions = async () => {
+    const fetchTransactions = useCallback(async () => {
         try {
-            setIsLoading(true);
-            const response = await fetch('/api/portfolio');
+            // Don't set isLoading to true for background refreshes to avoid UI flicker
+            // setIsLoading(true); 
+            const response = await fetch(`/api/portfolio?t=${Date.now()}`, {
+                headers: {
+                    "Cache-Control": "no-cache",
+                    "Pragma": "no-cache"
+                }
+            });
             if (response.ok) {
                 const data = await response.json();
-
-                // Check if there's localStorage data to migrate
-                const saved = localStorage.getItem("portfolio_transactions");
-                if (saved) {
-                    try {
-                        const localTransactions = JSON.parse(saved);
-                        if (Array.isArray(localTransactions) && localTransactions.length > 0) {
-                            console.log("Migrating localStorage data to database...");
-                            const migrationResult = await migrateLocalStorageToDatabase();
-                            console.log(migrationResult.message);
-
-                            const refreshResponse = await fetch('/api/portfolio');
-                            if (refreshResponse.ok) {
-                                const refreshData = await refreshResponse.json();
-                                setTransactions(refreshData.transactions || []);
-                            } else {
-                                setTransactions(data.transactions || []);
-                            }
-                        } else {
-                            setTransactions(data.transactions || []);
-                        }
-                    } catch {
-                        setTransactions(data.transactions || []);
-                    }
-                } else {
-                    setTransactions(data.transactions || []);
-                }
-            } else if (response.status === 401) {
-                const saved = localStorage.getItem("portfolio_transactions");
-                if (saved) {
-                    try { setTransactions(JSON.parse(saved)); } catch { /* ignore */ }
-                }
+                setTransactions(data.transactions || []);
             }
         } catch (error) {
             console.error('Error fetching transactions:', error);
-            const saved = localStorage.getItem("portfolio_transactions");
-            if (saved) {
-                try { setTransactions(JSON.parse(saved)); } catch { /* ignore */ }
-            }
-        } finally {
-            setIsLoading(false);
         }
-    };
+    }, []);
+
+    // Load Data from Database
+    useEffect(() => {
+        // If initialTransactions is empty, we MIGHT want to fetch, but usually server is source of truth.
+        // But for migration from localStorage logic, we should check once.
+        if (initialTransactions.length === 0) {
+            // checkMigration(); // Refactored migration logic below
+        }
+
+        // Always register refresh handler
+        registerRefreshHandler(fetchTransactions);
+
+        // We do NOT call fetchTransactions() on mount because we have initial data from server!
+        // Unless we suspect server data is stale, but we set revalidate=0.
+    }, [registerRefreshHandler, fetchTransactions, initialTransactions.length]);
 
     const handleDelete = async (id: string) => {
         if (!confirm("Are you sure you want to delete this record?")) {

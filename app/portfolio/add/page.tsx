@@ -38,7 +38,7 @@ export default async function AddTransactionPage() {
                     </p>
                 </div>
 
-                <AddTransactionForm />
+                <AddTransactionForm currentRates={rates} />
             </div>
         </div>
     );
