@@ -278,14 +278,8 @@ export function PortfolioClient({ initialRates, initialHistory, initialTransacti
                                 <div className="w-12 h-1 bg-muted-foreground/30 rounded-full"></div>
                             </div>
 
-                            <div className="flex justify-between items-start mb-6">
+                            <div className="mb-6">
                                 <h3 className="text-2xl font-bold">Transaction Details</h3>
-                                <button
-                                    onClick={() => setSelectedTransaction(null)}
-                                    className="text-muted-foreground hover:text-foreground text-2xl leading-none"
-                                >
-                                    ✕
-                                </button>
                             </div>
 
                             <div className="space-y-4 max-h-[70vh] overflow-y-auto">
