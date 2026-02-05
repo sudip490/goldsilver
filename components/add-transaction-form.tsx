@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Plus, ArrowLeft } from "lucide-react";
 import { PortfolioTransaction } from "@/lib/types";
 
 interface AddTransactionFormProps {
@@ -25,6 +27,7 @@ export function AddTransactionForm({ currentRates }: AddTransactionFormProps) {
         rate: '' as unknown as number,
         date: new Date().toISOString().split('T')[0]
     });
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Auto-fill rate handler
     const handleAutofillRate = () => {
@@ -34,9 +37,6 @@ export function AddTransactionForm({ currentRates }: AddTransactionFormProps) {
         const unit = formData.unit || 'tola';
 
         let rate = metal === 'gold' ? currentRates.gold : currentRates.silver;
-
-        // Rates are per Tola by default in currentRates based on calculation in page.tsx
-        // const goldRate = ... unit === "Tola"
 
         if (unit === 'gram') {
             // Convert Tola rate to Gram rate
@@ -54,6 +54,7 @@ export function AddTransactionForm({ currentRates }: AddTransactionFormProps) {
 
     const handleAddTransaction = async (e: React.FormEvent) => {
         e.preventDefault();
+        setIsSubmitting(true);
         const quantity = Number(formData.quantity) || 0;
         const ratePerTola = Number(formData.rate) || 0;
         const price = Number(formData.price) || 0;
@@ -61,11 +62,13 @@ export function AddTransactionForm({ currentRates }: AddTransactionFormProps) {
 
         // Validation: Must provide either rate or total price
         if (ratePerTola <= 0 && price <= 0) {
+            setIsSubmitting(false);
             return;
         }
 
         // Validation: Quantity must be positive
         if (quantity <= 0) {
+            setIsSubmitting(false);
             return;
         }
 
@@ -99,6 +102,7 @@ export function AddTransactionForm({ currentRates }: AddTransactionFormProps) {
             if (response.ok) {
                 // Redirect back to portfolio page
                 router.push('/portfolio');
+                router.refresh();
             } else if (response.status === 401) {
                 // User not authenticated, save to localStorage
                 const newTx: PortfolioTransaction = {
@@ -109,8 +113,10 @@ export function AddTransactionForm({ currentRates }: AddTransactionFormProps) {
                 const existing = saved ? JSON.parse(saved) : [];
                 localStorage.setItem("portfolio_transactions", JSON.stringify([newTx, ...existing]));
                 router.push('/portfolio');
+                router.refresh();
             } else {
                 alert('Failed to add transaction');
+                setIsSubmitting(false);
             }
         } catch (error) {
             console.error('Error adding transaction:', error);
@@ -123,148 +129,175 @@ export function AddTransactionForm({ currentRates }: AddTransactionFormProps) {
             const existing = saved ? JSON.parse(saved) : [];
             localStorage.setItem("portfolio_transactions", JSON.stringify([newTx, ...existing]));
             router.push('/portfolio');
+            router.refresh();
         }
     };
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Add Transaction</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <form onSubmit={handleAddTransaction} className="space-y-4">
-                    {/* Create Section */}
-                    <div className="space-y-4">
-                        <div className="flex items-center gap-2">
-                            <h3 className="text-sm font-semibold text-foreground">Create</h3>
-                            <div className="flex-1 h-px bg-border"></div>
-                        </div>
+        <Card className="border-none shadow-none md:border md:shadow-sm overflow-hidden">
+            <CardContent className="p-0 md:p-6">
+                <form onSubmit={handleAddTransaction} className="space-y-8">
 
+                    {/* 1. Transaction Type */}
+                    <div className="space-y-3">
+                        <label className="text-sm font-medium text-muted-foreground ml-1">Transaction Type</label>
+                        <Tabs
+                            value={formData.type}
+                            onValueChange={(val) => setFormData({ ...formData, type: val as 'buy' | 'sell' })}
+                            className="w-full"
+                        >
+                            <TabsList className="grid w-full grid-cols-2 h-12 p-1 bg-muted/50 rounded-xl">
+                                <TabsTrigger value="buy" className="h-full rounded-lg data-[state=active]:bg-background data-[state=active]:text-green-600 data-[state=active]:shadow-sm font-semibold">
+                                    Buy
+                                </TabsTrigger>
+                                <TabsTrigger value="sell" className="h-full rounded-lg data-[state=active]:bg-background data-[state=active]:text-red-600 data-[state=active]:shadow-sm font-semibold">
+                                    Sell
+                                </TabsTrigger>
+                            </TabsList>
+                        </Tabs>
+                    </div>
+
+                    {/* 2. Metal Selection */}
+                    <div className="space-y-3">
+                        <label className="text-sm font-medium text-muted-foreground ml-1">Select Metal</label>
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Type</label>
-                                <select
-                                    className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                                    value={formData.type}
-                                    onChange={e => setFormData({ ...formData, type: e.target.value as 'buy' | 'sell' })}
-                                >
-                                    <option value="buy">Buy</option>
-                                    <option value="sell">Sell</option>
-                                </select>
+                            <div
+                                className={`cursor-pointer relative overflow-hidden rounded-2xl border-2 p-4 flex flex-col items-center justify-center gap-3 transition-all duration-200 ${formData.metal === 'gold'
+                                    ? 'border-yellow-500/50 bg-yellow-500/5 shadow-md'
+                                    : 'border-muted hover:border-yellow-500/30 hover:bg-yellow-500/5'
+                                    }`}
+                                onClick={() => setFormData({ ...formData, metal: 'gold' })}
+                            >
+                                <div className={`text-3xl rounded-full p-3 ${formData.metal === 'gold' ? 'bg-yellow-100 dark:bg-yellow-900/30' : 'bg-muted'}`}>
+                                    🟡
+                                </div>
+                                <span className={`font-semibold ${formData.metal === 'gold' ? 'text-yellow-700 dark:text-yellow-400' : 'text-muted-foreground'}`}>Gold</span>
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Metal</label>
-                                <select
-                                    className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                                    value={formData.metal}
-                                    onChange={e => setFormData({ ...formData, metal: e.target.value as 'gold' | 'silver' })}
-                                >
-                                    <option value="gold">Gold</option>
-                                    <option value="silver">Silver</option>
-                                </select>
+
+                            <div
+                                className={`cursor-pointer relative overflow-hidden rounded-2xl border-2 p-4 flex flex-col items-center justify-center gap-3 transition-all duration-200 ${formData.metal === 'silver'
+                                    ? 'border-slate-400/50 bg-slate-400/5 shadow-md'
+                                    : 'border-muted hover:border-slate-400/30 hover:bg-slate-400/5'
+                                    }`}
+                                onClick={() => setFormData({ ...formData, metal: 'silver' })}
+                            >
+                                <div className={`text-3xl rounded-full p-3 ${formData.metal === 'silver' ? 'bg-slate-100 dark:bg-slate-800' : 'bg-muted'}`}>
+                                    ⚪
+                                </div>
+                                <span className={`font-semibold ${formData.metal === 'silver' ? 'text-slate-700 dark:text-slate-400' : 'text-muted-foreground'}`}>Silver</span>
                             </div>
                         </div>
                     </div>
 
-                    {/* Transaction Details Section */}
-                    <div className="grid grid-cols-2 gap-4">
+                    {/* 3. Details Inputs */}
+                    <div className="space-y-6 bg-muted/20 p-5 rounded-2xl border border-muted/50">
+                        {/* Quantity Row */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Quantity</label>
+                                <Input
+                                    type="number"
+                                    min="0.01"
+                                    step="0.01"
+                                    className="h-11 bg-background"
+                                    value={formData.quantity || ''}
+                                    onChange={e => setFormData({ ...formData, quantity: e.target.value === '' ? '' as unknown as number : Number(e.target.value) })}
+                                    placeholder="0.00"
+                                    required
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Unit</label>
+                                <div className="grid grid-cols-2 p-1 bg-background border rounded-lg h-11 items-center">
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, unit: 'tola' })}
+                                        className={`h-9 rounded-md text-sm font-medium transition-colors ${formData.unit === 'tola' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted'}`}
+                                    >
+                                        Tola
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, unit: 'gram' })}
+                                        className={`h-9 rounded-md text-sm font-medium transition-colors ${formData.unit === 'gram' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted'}`}
+                                    >
+                                        Gram
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Rate Row */}
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Quantity</label>
-                            <input
+                            <div className="flex justify-between items-center">
+                                <label className="text-sm font-medium">Rate per {formData.unit === 'tola' ? 'Tola' : 'Gram'} (NPR)</label>
+                                {currentRates && (
+                                    <button
+                                        type="button"
+                                        onClick={handleAutofillRate}
+                                        className="text-xs font-medium text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded-full hover:bg-blue-100 transition-colors"
+                                    >
+                                        Auto-fill Market Rate
+                                    </button>
+                                )}
+                            </div>
+                            <Input
                                 type="number"
-                                min="0.01"
+                                min="0"
                                 step="0.01"
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                value={formData.quantity || ''}
-                                onChange={e => setFormData({ ...formData, quantity: e.target.value === '' ? '' as unknown as number : Number(e.target.value) })}
-                                placeholder="Enter quantity"
+                                className="h-11 bg-background font-mono"
+                                value={formData.rate || ''}
+                                onChange={e => setFormData({ ...formData, rate: e.target.value === '' ? '' as unknown as number : Number(e.target.value) })}
+                                placeholder="0.00"
+                            />
+                        </div>
+
+                        {/* Date */}
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Date</label>
+                            <Input
+                                type="date"
+                                className="h-11 bg-background"
+                                value={formData.date}
+                                onChange={e => setFormData({ ...formData, date: e.target.value })}
                                 required
                             />
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Unit</label>
-                            <select
-                                className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                                value={formData.unit}
-                                onChange={e => setFormData({ ...formData, unit: e.target.value as 'tola' | 'gram' })}
-                            >
-                                <option value="tola">Tola</option>
-                                <option value="gram">Gram</option>
-                            </select>
-                        </div>
                     </div>
 
-                    <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                            <label className="text-sm font-medium">
-                                Rate per Tola (NPR) <span className="text-red-500">*</span>
-                            </label>
-                            {currentRates && (
-                                <button
-                                    type="button"
-                                    onClick={handleAutofillRate}
-                                    className="text-xs text-blue-600 hover:text-blue-800 hover:underline"
-                                >
-                                    Use Market Rate ({currentRates.date})
-                                </button>
+                    {/* Total Price & Action */}
+                    <div className="pt-2">
+                        <div className="flex justify-between items-center mb-6 px-1">
+                            <div className="text-sm text-muted-foreground">Total Price (Auto-calc)</div>
+                            <div className="text-2xl font-bold">
+                                Rs {((Number(formData.quantity) || 0) * (Number(formData.rate) || 0)).toLocaleString()}
+                            </div>
+                        </div>
+
+                        <Button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="w-full h-12 text-base font-semibold shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                        >
+                            {isSubmitting ? (
+                                <div className="flex items-center gap-2">
+                                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                                    <span>Saving...</span>
+                                </div>
+                            ) : (
+                                "Save Transaction"
                             )}
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                            Required if Total Price is empty. Always enter rate per Tola (auto-converts for Gram).
-                        </p>
-                        <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                            value={formData.rate || ''}
-                            onChange={e => setFormData({ ...formData, rate: e.target.value === '' ? '' as unknown as number : Number(e.target.value) })}
-                            placeholder="e.g. 150000"
-                        />
-                    </div>
-
-                    <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                            <label className="text-sm font-medium">
-                                Total Price (NPR) <span className="text-muted-foreground text-xs">(OR)</span>
-                            </label>
-                            <span className="text-xs text-muted-foreground">Auto-calculated if empty</span>
-                        </div>
-                        <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                            value={formData.price || ''}
-                            onChange={e => setFormData({ ...formData, price: Number(e.target.value) })}
-                            placeholder="Total Amount (if you know exact price)"
-                        />
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium">Date</label>
-                        <input
-                            type="date"
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                            value={formData.date}
-                            onChange={e => setFormData({ ...formData, date: e.target.value })}
-                            required
-                        />
-                    </div>
-
-                    <div className="flex gap-4">
+                        </Button>
                         <Button
                             type="button"
-                            variant="outline"
-                            className="w-full"
+                            variant="ghost"
+                            className="w-full mt-3 text-muted-foreground hover:text-foreground"
                             onClick={() => router.push('/portfolio')}
                         >
                             Cancel
                         </Button>
-                        <Button type="submit" className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">
-                            <Plus className="h-4 w-4" /> Add Transaction
-                        </Button>
                     </div>
+
                 </form>
             </CardContent>
         </Card>
