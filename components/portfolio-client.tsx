@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2, TrendingUp, TrendingDown, Coins, Wallet } from "lucide-react";
 import { PortfolioTransaction, PriceHistory } from "@/lib/types";
 import { PriceChart } from "@/components/price-chart";
+import { migrateLocalStorageToDatabase } from "@/lib/migrate-portfolio";
 
 interface PortfolioClientProps {
     initialRates: { gold: number; silver: number; date: string };
@@ -14,78 +16,95 @@ interface PortfolioClientProps {
 
 export function PortfolioClient({ initialRates, initialHistory }: PortfolioClientProps) {
     const [transactions, setTransactions] = useState<PortfolioTransaction[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [selectedTransaction, setSelectedTransaction] = useState<PortfolioTransaction | null>(null);
     const rates = initialRates;
     const history = initialHistory;
 
-    // Form State
-    const [formData, setFormData] = useState<Partial<PortfolioTransaction>>({
-        type: 'buy',
-        metal: 'gold',
-        unit: 'tola',
-        quantity: 1,
-        date: new Date().toISOString().split('T')[0]
-    });
-
-    // 1. Load Data
+    // Load Data from Database
     useEffect(() => {
-        // Load transactions from local storage
-        const saved = localStorage.getItem("portfolio_transactions");
-        if (saved) {
-            try { setTransactions(JSON.parse(saved)); } catch { /* ignore parse errors */ }
-        }
+        fetchTransactions();
     }, []);
 
-    // 2. Save Data
-    useEffect(() => {
-        if (transactions.length > 0) {
-            localStorage.setItem("portfolio_transactions", JSON.stringify(transactions));
+    const fetchTransactions = async () => {
+        try {
+            setIsLoading(true);
+            const response = await fetch('/api/portfolio');
+            if (response.ok) {
+                const data = await response.json();
+
+                // Check if there's localStorage data to migrate
+                const saved = localStorage.getItem("portfolio_transactions");
+                if (saved) {
+                    try {
+                        const localTransactions = JSON.parse(saved);
+                        if (Array.isArray(localTransactions) && localTransactions.length > 0) {
+                            console.log("Migrating localStorage data to database...");
+                            const migrationResult = await migrateLocalStorageToDatabase();
+                            console.log(migrationResult.message);
+
+                            const refreshResponse = await fetch('/api/portfolio');
+                            if (refreshResponse.ok) {
+                                const refreshData = await refreshResponse.json();
+                                setTransactions(refreshData.transactions || []);
+                            } else {
+                                setTransactions(data.transactions || []);
+                            }
+                        } else {
+                            setTransactions(data.transactions || []);
+                        }
+                    } catch {
+                        setTransactions(data.transactions || []);
+                    }
+                } else {
+                    setTransactions(data.transactions || []);
+                }
+            } else if (response.status === 401) {
+                const saved = localStorage.getItem("portfolio_transactions");
+                if (saved) {
+                    try { setTransactions(JSON.parse(saved)); } catch { /* ignore */ }
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching transactions:', error);
+            const saved = localStorage.getItem("portfolio_transactions");
+            if (saved) {
+                try { setTransactions(JSON.parse(saved)); } catch { /* ignore */ }
+            }
+        } finally {
+            setIsLoading(false);
         }
-    }, [transactions]);
-
-    // 3. Handlers
-    const handleAddTransaction = (e: React.FormEvent) => {
-        e.preventDefault();
-        const quantity = Number(formData.quantity) || 0;
-        const ratePerTola = Number(formData.rate) || 0;
-        const unit = formData.unit as 'tola' | 'gram';
-
-        // Convert rate based on unit
-        // If unit is gram, convert the Tola rate to per-gram rate
-        const actualRate = unit === 'gram' ? ratePerTola / 11.66 : ratePerTola;
-
-        // Calculate price
-        const price = Number(formData.price) || 0;
-        const finalPrice = price > 0 ? price : (actualRate * quantity);
-
-        // Store the actual rate used (converted if gram)
-        const finalRate = price > 0 ? (price / quantity) : actualRate;
-
-        const newTx: PortfolioTransaction = {
-            id: Date.now().toString(),
-            type: formData.type as 'buy' | 'sell',
-            metal: formData.metal as 'gold' | 'silver',
-            unit: formData.unit as 'tola' | 'gram',
-            quantity: quantity,
-            price: finalPrice,
-            rate: finalRate, // This is the actual rate per unit (Tola or Gram)
-            date: formData.date || new Date().toISOString(),
-            notes: formData.notes || ''
-        };
-
-        setTransactions([newTx, ...transactions]);
-        // Reset form slightly
-        setFormData({ ...formData, price: undefined, rate: undefined, notes: '' });
     };
 
-    const handleDelete = (id: string) => {
-        if (confirm("Are you sure you want to delete this record?")) {
+    const handleDelete = async (id: string) => {
+        if (!confirm("Are you sure you want to delete this record?")) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/portfolio/${id}`, {
+                method: 'DELETE',
+            });
+
+            if (response.ok) {
+                const newTx = transactions.filter(t => t.id !== id);
+                setTransactions(newTx);
+            } else if (response.status === 401) {
+                const newTx = transactions.filter(t => t.id !== id);
+                setTransactions(newTx);
+                localStorage.setItem("portfolio_transactions", JSON.stringify(newTx));
+            } else {
+                alert('Failed to delete transaction');
+            }
+        } catch (error) {
+            console.error('Error deleting transaction:', error);
             const newTx = transactions.filter(t => t.id !== id);
             setTransactions(newTx);
             localStorage.setItem("portfolio_transactions", JSON.stringify(newTx));
         }
     };
 
-    // 4. Calculations
+    // Calculations
     const calculateHoldings = () => {
         let goldQty = 0;
         let silverQty = 0;
@@ -94,7 +113,7 @@ export function PortfolioClient({ initialRates, initialHistory }: PortfolioClien
 
         transactions.forEach(tx => {
             const qty = tx.metal === 'gold' ?
-                (tx.unit === 'gram' ? tx.quantity / 11.66 : tx.quantity) : // Convert gram to Tola (approx)
+                (tx.unit === 'gram' ? tx.quantity / 11.66 : tx.quantity) :
                 (tx.unit === 'gram' ? tx.quantity / 11.66 : tx.quantity);
 
             if (tx.type === 'buy') {
@@ -108,13 +127,9 @@ export function PortfolioClient({ initialRates, initialHistory }: PortfolioClien
             }
         });
 
-        // Current Value
         const goldValue = goldQty * rates.gold;
         const silverValue = silverQty * rates.silver;
         const currentValue = goldValue + silverValue;
-
-        // Adjusted Cost (Simplistic: Total Buy Cost - Total Sell Value)
-        // For accurate tracking we'd need FIFO/LIFO, but this is a simple tracker
         const netCost = totalCost - totalSoldValue;
         const profit = currentValue - netCost;
         const profitPercent = netCost > 0 ? (profit / netCost) * 100 : 0;
@@ -125,15 +140,12 @@ export function PortfolioClient({ initialRates, initialHistory }: PortfolioClien
     const stats = calculateHoldings();
     const isProfit = stats.profit >= 0;
 
-    // Calculate historical value of CURRENT holdings
     const portfolioHistory = useMemo(() => {
         if (!history.gold.length) return [];
         return history.gold.map((h) => {
             const date = h.date;
             const goldPrice = h.price;
             const silverPrice = history.silver.find(s => s.date === date)?.price || 0;
-
-            // Value = (Qty * Price)
             const val = (stats.goldQty * goldPrice) + (stats.silverQty * silverPrice);
             return { date, price: val };
         });
@@ -211,155 +223,157 @@ export function PortfolioClient({ initialRates, initialHistory }: PortfolioClien
                     </div>
                 )}
 
-                {/* Main Content Area */}
-                <div className="grid gap-8 md:grid-cols-3">
-                    {/* Left: Transaction Form */}
-                    <div className="md:col-span-1">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Add Transaction</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <form onSubmit={handleAddTransaction} className="space-y-4">
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium">Type</label>
-                                            <select
-                                                className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                                                value={formData.type}
-                                                onChange={e => setFormData({ ...formData, type: e.target.value as 'buy' | 'sell' })}
-                                            >
-                                                <option value="buy">Buy</option>
-                                                <option value="sell">Sell</option>
-                                            </select>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium">Metal</label>
-                                            <select
-                                                className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                                                value={formData.metal}
-                                                onChange={e => setFormData({ ...formData, metal: e.target.value as 'gold' | 'silver' })}
-                                            >
-                                                <option value="gold">Gold</option>
-                                                <option value="silver">Silver</option>
-                                            </select>
-                                        </div>
-                                    </div>
+                {/* Transaction History */}
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-2xl font-bold">Transaction History</h2>
+                    <Link href="/portfolio/add">
+                        <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white">
+                            <Plus className="h-4 w-4" /> Add Transaction
+                        </Button>
+                    </Link>
+                </div>
 
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium">Quantity</label>
-                                            <input
-                                                type="number" step="0.01"
-                                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                                value={formData.quantity}
-                                                onChange={e => setFormData({ ...formData, quantity: Number(e.target.value) })}
-                                                required
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium">Unit</label>
-                                            <select
-                                                className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                                                value={formData.unit}
-                                                onChange={e => setFormData({ ...formData, unit: e.target.value as 'tola' | 'gram' })}
-                                            >
-                                                <option value="tola">Tola</option>
-                                                <option value="gram">Gram</option>
-                                            </select>
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium">Rate per Tola (NPR)</label>
-                                        <p className="text-xs text-muted-foreground">Always enter rate per Tola. Auto-converts for Gram.</p>
-                                        <input
-                                            type="number"
-                                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                            value={formData.rate || ''}
-                                            onChange={e => setFormData({ ...formData, rate: Number(e.target.value) })}
-                                            placeholder="e.g. 150000"
-                                        />
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <div className="flex justify-between">
-                                            <label className="text-sm font-medium">Total Price (NPR)</label>
-                                            <span className="text-xs text-muted-foreground">Auto-calculated if empty</span>
-                                        </div>
-                                        <input
-                                            type="number"
-                                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                            value={formData.price || ''}
-                                            onChange={e => setFormData({ ...formData, price: Number(e.target.value) })}
-                                            placeholder="Total Amount"
-                                        />
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium">Date</label>
-                                        <input
-                                            type="date"
-                                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                            value={formData.date}
-                                            onChange={e => setFormData({ ...formData, date: e.target.value })}
-                                            required
-                                        />
-                                    </div>
-
-                                    <Button type="submit" className="w-full flex items-center gap-2">
-                                        <Plus className="h-4 w-4" /> Add Transaction
-                                    </Button>
-                                </form>
-                            </CardContent>
-                        </Card>
-                    </div>
-
-                    {/* Right: Transactions List */}
-                    <div className="md:col-span-2">
-                        <Card className="h-full">
-                            <CardHeader>
-                                <CardTitle>Transaction History</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                {transactions.length === 0 ? (
-                                    <div className="text-center py-12 text-muted-foreground">
-                                        No transactions yet. Add your first investment!
-                                    </div>
-                                ) : (
-                                    <div className="space-y-4">
-                                        {transactions.map((tx) => (
-                                            <div key={tx.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                                                <div className="flex items-center gap-4">
-                                                    <div className={`p-2 rounded-full ${tx.type === 'buy' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                                                        {tx.type === 'buy' ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-                                                    </div>
-                                                    <div>
-                                                        <div className="font-medium capitalize">
-                                                            {tx.type} {tx.quantity} {tx.unit} {tx.metal}
-                                                        </div>
-                                                        <div className="text-xs text-muted-foreground">
-                                                            @ Rs {tx.rate?.toLocaleString()} / {tx.unit} • {tx.date}
-                                                        </div>
-                                                    </div>
+                <Card>
+                    <CardContent className="pt-6">
+                        {isLoading ? (
+                            <div className="text-center py-12 text-muted-foreground">
+                                Loading transactions...
+                            </div>
+                        ) : transactions.length === 0 ? (
+                            <div className="text-center py-12 text-muted-foreground">
+                                No transactions yet. Add your first investment!
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {transactions.map((tx) => (
+                                    <div
+                                        key={tx.id}
+                                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                                        onClick={() => setSelectedTransaction(tx)}
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className={`p-2 rounded-full ${tx.type === 'buy' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                                                {tx.type === 'buy' ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                                            </div>
+                                            <div>
+                                                <div className="font-medium capitalize">
+                                                    {tx.type} {tx.quantity} {tx.unit} {tx.metal}
                                                 </div>
-                                                <div className="text-right">
-                                                    <div className="font-bold">Rs {tx.price.toLocaleString()}</div>
-                                                    <button
-                                                        onClick={() => handleDelete(tx.id)}
-                                                        className="text-xs text-red-500 hover:text-red-700 mt-1 flex items-center justify-end gap-1"
-                                                    >
-                                                        <Trash2 className="h-3 w-3" /> Remove
-                                                    </button>
+                                                <div className="text-xs text-muted-foreground">
+                                                    @ Rs {tx.rate?.toLocaleString()} / {tx.unit} • {tx.date}
                                                 </div>
                                             </div>
-                                        ))}
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="font-bold">Rs {tx.price.toLocaleString()}</div>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDelete(tx.id);
+                                                }}
+                                                className="text-xs text-red-500 hover:text-red-700 mt-1 flex items-center justify-end gap-1"
+                                            >
+                                                <Trash2 className="h-3 w-3" /> Remove
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+
+                {/* Transaction Details Bottom Sheet */}
+                {selectedTransaction && (
+                    <div
+                        className="fixed inset-0 bg-black/50 flex items-end justify-center z-50 animate-in fade-in duration-200"
+                        onClick={() => setSelectedTransaction(null)}
+                    >
+                        <div
+                            className="bg-background rounded-t-2xl shadow-lg w-full max-w-2xl p-6 pb-8 animate-in slide-in-from-bottom duration-300"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {/* Handle bar */}
+                            <div className="flex justify-center mb-4">
+                                <div className="w-12 h-1 bg-muted-foreground/30 rounded-full"></div>
+                            </div>
+
+                            <div className="flex justify-between items-start mb-6">
+                                <h3 className="text-2xl font-bold">Transaction Details</h3>
+                                <button
+                                    onClick={() => setSelectedTransaction(null)}
+                                    className="text-muted-foreground hover:text-foreground text-2xl leading-none"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+
+                            <div className="space-y-4 max-h-[70vh] overflow-y-auto">
+                                <div className="flex items-center gap-3">
+                                    <div className={`p-3 rounded-full ${selectedTransaction.type === 'buy' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                                        {selectedTransaction.type === 'buy' ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
+                                    </div>
+                                    <div>
+                                        <div className="text-sm text-muted-foreground">Transaction Type</div>
+                                        <div className="font-semibold capitalize text-lg">{selectedTransaction.type}</div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+                                    <div>
+                                        <div className="text-sm text-muted-foreground">Metal</div>
+                                        <div className="font-medium capitalize">{selectedTransaction.metal}</div>
+                                    </div>
+                                    <div>
+                                        <div className="text-sm text-muted-foreground">Unit</div>
+                                        <div className="font-medium capitalize">{selectedTransaction.unit}</div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <div className="text-sm text-muted-foreground">Quantity</div>
+                                        <div className="font-medium">{selectedTransaction.quantity}</div>
+                                    </div>
+                                    <div>
+                                        <div className="text-sm text-muted-foreground">Rate per {selectedTransaction.unit}</div>
+                                        <div className="font-medium">Rs {selectedTransaction.rate?.toLocaleString()}</div>
+                                    </div>
+                                </div>
+
+                                <div className="pt-4 border-t">
+                                    <div className="text-sm text-muted-foreground">Total Price</div>
+                                    <div className="text-2xl font-bold">Rs {selectedTransaction.price.toLocaleString()}</div>
+                                </div>
+
+                                <div>
+                                    <div className="text-sm text-muted-foreground">Date</div>
+                                    <div className="font-medium">{selectedTransaction.date}</div>
+                                </div>
+
+                                {selectedTransaction.notes && (
+                                    <div>
+                                        <div className="text-sm text-muted-foreground">Notes</div>
+                                        <div className="font-medium">{selectedTransaction.notes}</div>
                                     </div>
                                 )}
-                            </CardContent>
-                        </Card>
+
+                                <div className="pt-4 border-t">
+                                    <Button
+                                        variant="destructive"
+                                        className="w-full"
+                                        onClick={() => {
+                                            setSelectedTransaction(null);
+                                            handleDelete(selectedTransaction.id);
+                                        }}
+                                    >
+                                        <Trash2 className="h-4 w-4 mr-2" /> Delete Transaction
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
         </div>
     );

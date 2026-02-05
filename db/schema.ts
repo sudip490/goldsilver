@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { pgTable, text, timestamp, boolean, index } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, index, real, integer } from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
     id: text("id").primaryKey(),
@@ -92,5 +92,41 @@ export const accountRelations = relations(account, ({ one }) => ({
     }),
 }));
 
+// Portfolio Transaction Table
+export const portfolioTransaction = pgTable(
+    "portfolio_transaction",
+    {
+        id: text("id").primaryKey(),
+        userId: text("user_id")
+            .notNull()
+            .references(() => user.id, { onDelete: "cascade" }),
+        type: text("type").notNull(), // 'buy' or 'sell'
+        metal: text("metal").notNull(), // 'gold' or 'silver'
+        unit: text("unit").notNull(), // 'tola' or 'gram'
+        quantity: real("quantity").notNull(),
+        price: real("price").notNull(), // Total price
+        rate: real("rate").notNull(), // Rate per unit
+        date: timestamp("date").notNull(),
+        notes: text("notes"),
+        createdAt: timestamp("created_at").defaultNow().notNull(),
+        updatedAt: timestamp("updated_at")
+            .defaultNow()
+            .$onUpdate(() => /* @__PURE__ */ new Date())
+            .notNull(),
+    },
+    (table) => [
+        index("portfolio_transaction_userId_idx").on(table.userId),
+        index("portfolio_transaction_date_idx").on(table.date),
+    ],
+);
 
+export const portfolioTransactionRelations = relations(portfolioTransaction, ({ one }) => ({
+    user: one(user, {
+        fields: [portfolioTransaction.userId],
+        references: [user.id],
+    }),
+}));
 
+export const userPortfolioRelations = relations(user, ({ many }) => ({
+    portfolioTransactions: many(portfolioTransaction),
+}));
