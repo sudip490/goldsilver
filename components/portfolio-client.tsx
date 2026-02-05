@@ -23,6 +23,7 @@ export function PortfolioClient({ initialRates, initialHistory, initialTransacti
     // Actually, since we pass data from server, we can say isLoading = false initially.
     // const [isLoading, setIsLoading] = useState(false); // Removed unused state
     const [selectedTransaction, setSelectedTransaction] = useState<PortfolioTransaction | null>(null);
+    const [isClosing, setIsClosing] = useState(false);
     const rates = initialRates;
     const history = initialHistory;
 
@@ -59,6 +60,14 @@ export function PortfolioClient({ initialRates, initialHistory, initialTransacti
         // We do NOT call fetchTransactions() on mount because we have initial data from server!
         // Unless we suspect server data is stale, but we set revalidate=0.
     }, [registerRefreshHandler, fetchTransactions, initialTransactions.length]);
+
+    const handleCloseSheet = () => {
+        setIsClosing(true);
+        setTimeout(() => {
+            setSelectedTransaction(null);
+            setIsClosing(false);
+        }, 300); // Match animation duration
+    };
 
     const handleDelete = async (id: string) => {
         if (!confirm("Are you sure you want to delete this record?")) {
@@ -266,23 +275,25 @@ export function PortfolioClient({ initialRates, initialHistory, initialTransacti
                 {/* Transaction Details Bottom Sheet */}
                 {selectedTransaction && (
                     <div
-                        className="fixed inset-0 bg-black/50 flex items-end justify-center z-50 animate-in fade-in duration-200"
-                        onClick={() => setSelectedTransaction(null)}
+                        className={`fixed inset-0 bg-black/50 flex items-end justify-center z-50 ${isClosing ? 'animate-out fade-out duration-200' : 'animate-in fade-in duration-200'
+                            }`}
+                        onClick={handleCloseSheet}
                     >
                         <div
-                            className="bg-background rounded-t-2xl shadow-lg w-full max-w-2xl p-6 pb-8 animate-in slide-in-from-bottom duration-300"
+                            className={`bg-background rounded-t-2xl shadow-lg w-full max-w-2xl p-5 pb-6 ${isClosing ? 'animate-out slide-out-to-bottom duration-300' : 'animate-in slide-in-from-bottom duration-300'
+                                }`}
                             onClick={(e) => e.stopPropagation()}
                         >
                             {/* Handle bar */}
-                            <div className="flex justify-center mb-4">
+                            <div className="flex justify-center mb-3">
                                 <div className="w-12 h-1 bg-muted-foreground/30 rounded-full"></div>
                             </div>
 
-                            <div className="mb-6">
-                                <h3 className="text-2xl font-bold">Transaction Details</h3>
+                            <div className="mb-4">
+                                <h3 className="text-xl font-bold">Transaction Details</h3>
                             </div>
 
-                            <div className="space-y-4 max-h-[70vh] overflow-y-auto">
+                            <div className="space-y-3 max-h-[55vh] overflow-y-auto">
                                 <div className="flex items-center gap-3">
                                     <div className={`p-3 rounded-full ${selectedTransaction.type === 'buy' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
                                         {selectedTransaction.type === 'buy' ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
@@ -337,8 +348,8 @@ export function PortfolioClient({ initialRates, initialHistory, initialTransacti
                                         variant="destructive"
                                         className="w-full"
                                         onClick={() => {
-                                            setSelectedTransaction(null);
-                                            handleDelete(selectedTransaction.id);
+                                            handleCloseSheet();
+                                            setTimeout(() => handleDelete(selectedTransaction.id), 300);
                                         }}
                                     >
                                         <Trash2 className="h-4 w-4 mr-2" /> Delete Transaction
