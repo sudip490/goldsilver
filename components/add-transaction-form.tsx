@@ -197,12 +197,12 @@ export function AddTransactionForm({ currentRates }: AddTransactionFormProps) {
                                 <label className="text-sm font-medium">Quantity</label>
                                 <Input
                                     type="number"
-                                    min="0.01"
-                                    step="0.01"
+                                    min="0.00001"
+                                    step="0.00001"
                                     className="h-11 bg-background"
                                     value={formData.quantity || ''}
                                     onChange={e => setFormData({ ...formData, quantity: e.target.value === '' ? '' as unknown as number : Number(e.target.value) })}
-                                    placeholder="0.00"
+                                    placeholder="0.00000"
                                     required
                                 />
                             </div>
@@ -267,12 +267,7 @@ export function AddTransactionForm({ currentRates }: AddTransactionFormProps) {
 
                     {/* Total Price & Action */}
                     <div className="pt-2">
-                        <div className="flex justify-between items-center mb-6 px-1">
-                            <div className="text-sm text-muted-foreground">Total Price (Auto-calc)</div>
-                            <div className="text-2xl font-bold">
-                                Rs {((Number(formData.quantity) || 0) * (Number(formData.rate) || 0)).toLocaleString()}
-                            </div>
-                        </div>
+
 
                         <Button
                             type="submit"
