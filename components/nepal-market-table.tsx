@@ -60,9 +60,9 @@ export function NepalMarketTable({ rates }: NepalMarketTableProps) {
                                     </td>
                                     <td className="py-3 px-2 md:px-4 text-right">
                                         {rate.change !== undefined && rate.change !== 0 ? (
-                                            <div className={`flex items-center justify-end gap-1 ${rate.change > 0 ? "text-green-600" : "text-red-600"}`}>
+                                            <div className={`flex items-center justify-end gap-1 whitespace-nowrap ${rate.change > 0 ? "text-green-600" : "text-red-600"}`}>
                                                 {rate.change > 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                                                <span>{formatCurrency(rate.change, "NPR")}</span>
+                                                <span>{formatCurrency(Math.abs(rate.change), "NPR")}</span>
                                                 <span className="text-xs opacity-80">({rate.changePercent?.toFixed(2)}%)</span>
                                             </div>
                                         ) : (
