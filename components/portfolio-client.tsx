@@ -282,33 +282,32 @@ export function PortfolioClient({ initialRates, initialHistory, initialTransacti
                                 {transactions.map((tx) => (
                                     <div
                                         key={tx.id}
-                                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                                        className="flex items-center justify-between p-4 border-b last:border-0 hover:bg-muted/30 transition-colors cursor-pointer"
                                         onClick={() => setSelectedTransaction(tx)}
                                     >
                                         <div className="flex items-center gap-4">
-                                            <div className={`p-2 rounded-full ${tx.type === 'buy' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                                                {tx.type === 'buy' ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                                            {/* B/S Avatar */}
+                                            <div className={`h-10 w-10 rounded-full flex items-center justify-center shrink-0 font-bold text-lg ${tx.type === 'buy'
+                                                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                                    : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                                }`}>
+                                                {tx.type === 'buy' ? 'B' : 'S'}
                                             </div>
-                                            <div>
-                                                <div className="font-medium capitalize">
-                                                    {tx.type} {tx.quantity} {tx.unit} {tx.metal}
-                                                </div>
-                                                <div className="text-xs text-muted-foreground">
-                                                    @ Rs {tx.rate?.toLocaleString()} / {tx.unit} • {tx.date}
-                                                </div>
+
+                                            {/* Metal & Quantity */}
+                                            <div className="flex flex-col">
+                                                <span className="font-semibold text-base capitalize text-foreground">
+                                                    {tx.metal}
+                                                </span>
+                                                <span className="text-sm text-muted-foreground">
+                                                    {tx.quantity} {tx.unit}
+                                                </span>
                                             </div>
                                         </div>
-                                        <div className="text-right">
-                                            <div className="font-bold">Rs {tx.price.toLocaleString()}</div>
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleDelete(tx.id);
-                                                }}
-                                                className="text-xs text-red-500 hover:text-red-700 mt-1 flex items-center justify-end gap-1"
-                                            >
-                                                <Trash2 className="h-3 w-3" /> Remove
-                                            </button>
+
+                                        {/* Price Only */}
+                                        <div className="font-bold text-lg whitespace-nowrap">
+                                            Rs {tx.price.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                                         </div>
                                     </div>
                                 ))}
