@@ -8,6 +8,13 @@
       "when": 1770188704956,
       "tag": "0000_cold_obadiah_stane",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1770259532665,
+      "tag": "0001_good_karnak",
+      "breakpoints": true
     }
   ]
 }
