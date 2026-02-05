@@ -7,7 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { PortfolioTransaction } from "@/lib/types";
 
-export function AddTransactionForm() {
+interface AddTransactionFormProps {
+    currentRates?: {
+        gold: number;
+        silver: number;
+        date: string;
+    };
+}
+
+export function AddTransactionForm({ currentRates }: AddTransactionFormProps) {
     const router = useRouter();
     const [formData, setFormData] = useState<Partial<PortfolioTransaction>>({
         type: 'buy',
@@ -17,6 +25,32 @@ export function AddTransactionForm() {
         rate: '' as unknown as number,
         date: new Date().toISOString().split('T')[0]
     });
+
+    // Auto-fill rate handler
+    const handleAutofillRate = () => {
+        if (!currentRates) return;
+
+        const metal = formData.metal || 'gold';
+        const unit = formData.unit || 'tola';
+
+        let rate = metal === 'gold' ? currentRates.gold : currentRates.silver;
+
+        // Rates are per Tola by default in currentRates based on calculation in page.tsx
+        // const goldRate = ... unit === "Tola"
+
+        if (unit === 'gram') {
+            // Convert Tola rate to Gram rate
+            // 1 Tola = 11.66 Grams
+            rate = rate / 11.66;
+            // Round to 2 decimals
+            rate = Math.round(rate * 100) / 100;
+        }
+
+        setFormData(prev => ({
+            ...prev,
+            rate: rate
+        }));
+    };
 
     const handleAddTransaction = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -161,9 +195,20 @@ export function AddTransactionForm() {
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium">
-                            Rate per Tola (NPR) <span className="text-red-500">*</span>
-                        </label>
+                        <div className="flex justify-between items-center">
+                            <label className="text-sm font-medium">
+                                Rate per Tola (NPR) <span className="text-red-500">*</span>
+                            </label>
+                            {currentRates && (
+                                <button
+                                    type="button"
+                                    onClick={handleAutofillRate}
+                                    className="text-xs text-blue-600 hover:text-blue-800 hover:underline"
+                                >
+                                    Use Market Rate ({currentRates.date})
+                                </button>
+                            )}
+                        </div>
                         <p className="text-xs text-muted-foreground">
                             Required if Total Price is empty. Always enter rate per Tola (auto-converts for Gram).
                         </p>
