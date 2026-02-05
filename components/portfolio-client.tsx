@@ -8,7 +8,6 @@ import { Plus, Trash2, TrendingUp, TrendingDown, Coins, Wallet } from "lucide-re
 import { useRefresh } from "@/contexts/refresh-context";
 import { PortfolioTransaction, PriceHistory } from "@/lib/types";
 import { PriceChart } from "@/components/price-chart";
-import { migrateLocalStorageToDatabase } from "@/lib/migrate-portfolio";
 
 interface PortfolioClientProps {
     initialRates: { gold: number; silver: number; date: string };
@@ -22,7 +21,7 @@ export function PortfolioClient({ initialRates, initialHistory, initialTransacti
     const [transactions, setTransactions] = useState<PortfolioTransaction[]>(initialTransactions);
     // If we have initial transactions, we are not loading. If it's empty, we might naturally be empty or loading?
     // Actually, since we pass data from server, we can say isLoading = false initially.
-    const [isLoading, setIsLoading] = useState(false);
+    // const [isLoading, setIsLoading] = useState(false); // Removed unused state
     const [selectedTransaction, setSelectedTransaction] = useState<PortfolioTransaction | null>(null);
     const rates = initialRates;
     const history = initialHistory;
@@ -220,11 +219,7 @@ export function PortfolioClient({ initialRates, initialHistory, initialTransacti
 
                 <Card>
                     <CardContent className="pt-6">
-                        {isLoading ? (
-                            <div className="text-center py-12 text-muted-foreground">
-                                Loading transactions...
-                            </div>
-                        ) : transactions.length === 0 ? (
+                        {transactions.length === 0 ? (
                             <div className="text-center py-12 text-muted-foreground">
                                 No transactions yet. Add your first investment!
                             </div>
