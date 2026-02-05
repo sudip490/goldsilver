@@ -312,22 +312,24 @@ export function PortfolioClient({ initialRates, initialHistory, initialTransacti
                     >
                         <div
                             className={`bg-background rounded-t-2xl shadow-lg w-full max-w-2xl p-5 pb-6 transition-all duration-300 ease-in-out ${isClosing ? 'animate-out slide-out-to-bottom duration-300' : 'animate-in slide-in-from-bottom duration-300'
-                                } ${isExpanded ? 'min-h-[50vh] max-h-[90vh]' : 'max-h-[55vh]'}`}
+                                } ${isExpanded ? 'min-h-[50vh] max-h-[90vh]' : 'h-auto max-h-[90vh]'}`}
                             onClick={(e) => e.stopPropagation()}
                         >
-                            {/* Handle bar */}
+                            {/* Handle bar & Header Area - Swipeable */}
                             <div
-                                className="flex justify-center mb-3 cursor-pointer py-2 -mt-2 touch-none select-none"
+                                className="cursor-grab active:cursor-grabbing text-center"
                                 onClick={toggleExpanded}
                                 onTouchStart={onTouchStart}
                                 onTouchMove={onTouchMove}
                                 onTouchEnd={onTouchEnd}
                             >
-                                <div className={`w-12 h-1 bg-muted-foreground/30 rounded-full transition-colors ${isExpanded ? 'bg-primary/50' : ''}`}></div>
-                            </div>
+                                <div className="flex justify-center mb-3 py-2 -mt-2">
+                                    <div className={`w-12 h-1 bg-muted-foreground/30 rounded-full transition-colors ${isExpanded ? 'bg-primary/50' : ''}`}></div>
+                                </div>
 
-                            <div className="mb-4">
-                                <h3 className="text-xl font-bold">Transaction Details</h3>
+                                <div className="mb-4">
+                                    <h3 className="text-xl font-bold">Transaction Details</h3>
+                                </div>
                             </div>
 
                             <div className={`space-y-3 overflow-y-auto ${isExpanded ? 'h-auto max-h-[80vh]' : 'max-h-[55vh]'}`}>
