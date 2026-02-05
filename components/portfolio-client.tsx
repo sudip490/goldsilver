@@ -24,6 +24,31 @@ export function PortfolioClient({ initialRates, initialHistory, initialTransacti
     // const [isLoading, setIsLoading] = useState(false); // Removed unused state
     const [selectedTransaction, setSelectedTransaction] = useState<PortfolioTransaction | null>(null);
     const [isClosing, setIsClosing] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(false);
+    const [touchStart, setTouchStart] = useState<number | null>(null);
+    const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+    const onTouchStart = (e: React.TouchEvent) => {
+        setTouchEnd(null);
+        setTouchStart(e.targetTouches[0].clientY);
+    };
+
+    const onTouchMove = (e: React.TouchEvent) => {
+        setTouchEnd(e.targetTouches[0].clientY);
+    };
+
+    const onTouchEnd = () => {
+        if (!touchStart || !touchEnd) return;
+        const distance = touchStart - touchEnd;
+        const isDownSwipe = distance < -50;
+        const isUpSwipe = distance > 50;
+
+        if (isDownSwipe) {
+            handleCloseSheet();
+        } else if (isUpSwipe) {
+            setIsExpanded(true);
+        }
+    };
     const rates = initialRates;
     const history = initialHistory;
 
@@ -66,7 +91,13 @@ export function PortfolioClient({ initialRates, initialHistory, initialTransacti
         setTimeout(() => {
             setSelectedTransaction(null);
             setIsClosing(false);
+            setIsExpanded(false);
         }, 300); // Match animation duration
+    };
+
+    const toggleExpanded = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setIsExpanded(!isExpanded);
     };
 
     const handleDelete = async (id: string) => {
@@ -217,7 +248,7 @@ export function PortfolioClient({ initialRates, initialHistory, initialTransacti
                 )}
 
                 {/* Transaction History */}
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
                     <h2 className="text-2xl font-bold">Transaction History</h2>
                     <Link href="/portfolio/add">
                         <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white">
@@ -280,20 +311,26 @@ export function PortfolioClient({ initialRates, initialHistory, initialTransacti
                         onClick={handleCloseSheet}
                     >
                         <div
-                            className={`bg-background rounded-t-2xl shadow-lg w-full max-w-2xl p-5 pb-6 ${isClosing ? 'animate-out slide-out-to-bottom duration-300' : 'animate-in slide-in-from-bottom duration-300'
-                                }`}
+                            className={`bg-background rounded-t-2xl shadow-lg w-full max-w-2xl p-5 pb-6 transition-all duration-300 ease-in-out ${isClosing ? 'animate-out slide-out-to-bottom duration-300' : 'animate-in slide-in-from-bottom duration-300'
+                                } ${isExpanded ? 'min-h-[50vh] max-h-[90vh]' : 'max-h-[55vh]'}`}
                             onClick={(e) => e.stopPropagation()}
                         >
                             {/* Handle bar */}
-                            <div className="flex justify-center mb-3">
-                                <div className="w-12 h-1 bg-muted-foreground/30 rounded-full"></div>
+                            <div
+                                className="flex justify-center mb-3 cursor-pointer py-2 -mt-2 touch-none select-none"
+                                onClick={toggleExpanded}
+                                onTouchStart={onTouchStart}
+                                onTouchMove={onTouchMove}
+                                onTouchEnd={onTouchEnd}
+                            >
+                                <div className={`w-12 h-1 bg-muted-foreground/30 rounded-full transition-colors ${isExpanded ? 'bg-primary/50' : ''}`}></div>
                             </div>
 
                             <div className="mb-4">
                                 <h3 className="text-xl font-bold">Transaction Details</h3>
                             </div>
 
-                            <div className="space-y-3 max-h-[55vh] overflow-y-auto">
+                            <div className={`space-y-3 overflow-y-auto ${isExpanded ? 'h-auto max-h-[80vh]' : 'max-h-[55vh]'}`}>
                                 <div className="flex items-center gap-3">
                                     <div className={`p-3 rounded-full ${selectedTransaction.type === 'buy' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
                                         {selectedTransaction.type === 'buy' ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
