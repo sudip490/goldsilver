@@ -1,13 +1,12 @@
 import { PortfolioClient } from "@/components/portfolio-client";
 import { ProtectedRoute } from "@/components/protected-route";
 import { fetchAllMetalPrices } from "@/lib/api-service";
-import { NepalRate } from "@/lib/types";
+import { NepalRate, PortfolioTransaction } from "@/lib/types";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { portfolioTransaction } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
-import { redirect } from "next/navigation";
 
 export const revalidate = 0; // Dynamic, no caching for user portfolio
 
@@ -76,7 +75,7 @@ export default async function PortfolioPage() {
             <PortfolioClient
                 initialRates={initialRates}
                 initialHistory={initialHistory}
-                initialTransactions={initialTransactions as any}
+                initialTransactions={initialTransactions as PortfolioTransaction[]}
             />
         </ProtectedRoute>
     );
