@@ -49,6 +49,20 @@ export function PortfolioClient({ initialRates, initialHistory, initialTransacti
             setIsExpanded(true);
         }
     };
+
+    // Lock body scroll when sheet is open
+    useEffect(() => {
+        if (selectedTransaction) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [selectedTransaction]);
+
     const rates = initialRates;
     const history = initialHistory;
 
