@@ -7,18 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { PortfolioTransaction } from "@/lib/types";
 
-interface AddTransactionFormProps {
-    initialRates: { gold: number; silver: number; date: string };
-}
-
-export function AddTransactionForm({ initialRates }: AddTransactionFormProps) {
+export function AddTransactionForm() {
     const router = useRouter();
     const [formData, setFormData] = useState<Partial<PortfolioTransaction>>({
         type: 'buy',
         metal: 'gold',
         unit: 'tola',
-        quantity: '' as any,
-        rate: '' as any,
+        quantity: '' as unknown as number,
+        rate: '' as unknown as number,
         date: new Date().toISOString().split('T')[0]
     });
 
@@ -146,7 +142,7 @@ export function AddTransactionForm({ initialRates }: AddTransactionFormProps) {
                                 step="0.01"
                                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                                 value={formData.quantity || ''}
-                                onChange={e => setFormData({ ...formData, quantity: e.target.value === '' ? '' as any : Number(e.target.value) })}
+                                onChange={e => setFormData({ ...formData, quantity: e.target.value === '' ? '' as unknown as number : Number(e.target.value) })}
                                 placeholder="Enter quantity"
                                 required
                             />
@@ -177,7 +173,7 @@ export function AddTransactionForm({ initialRates }: AddTransactionFormProps) {
                             step="0.01"
                             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                             value={formData.rate || ''}
-                            onChange={e => setFormData({ ...formData, rate: e.target.value === '' ? '' as any : Number(e.target.value) })}
+                            onChange={e => setFormData({ ...formData, rate: e.target.value === '' ? '' as unknown as number : Number(e.target.value) })}
                             placeholder="e.g. 150000"
                         />
                     </div>
