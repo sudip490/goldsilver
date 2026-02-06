@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRefresh } from "@/contexts/refresh-context";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/mode-toggle";
@@ -29,6 +29,26 @@ export function Header() {
     const { data: session } = authClient.useSession();
     const [isSignOut, setIsSignOut] = useState(false);
     const [showLoginDialog, setShowLoginDialog] = useState(false);
+
+    const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+    useEffect(() => {
+        const handler = (e: any) => {
+            e.preventDefault();
+            setDeferredPrompt(e);
+        };
+        window.addEventListener('beforeinstallprompt', handler);
+        return () => window.removeEventListener('beforeinstallprompt', handler);
+    }, []);
+
+    const handleInstallClick = async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+            setDeferredPrompt(null);
+        }
+    };
 
     const handleSignOut = async () => {
         setIsSignOut(true);
@@ -114,6 +134,18 @@ export function Header() {
                                             </Link>
                                         </SheetClose>
                                     ))}
+
+                                    {/* Install App Button */}
+                                    {deferredPrompt && (
+                                        <Button
+                                            variant="ghost"
+                                            onClick={handleInstallClick}
+                                            className="w-full justify-start px-4 py-3 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-3 h-5 w-5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></svg>
+                                            Install App
+                                        </Button>
+                                    )}
 
                                     <div className="my-2 px-4">
                                         <div className="h-px bg-border" />
