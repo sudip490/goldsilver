@@ -4,10 +4,29 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+    Drawer,
+    DrawerContent,
+    DrawerHeader,
+    DrawerTitle,
+    DrawerDescription,
+    DrawerFooter,
+    DrawerClose,
+} from "@/components/ui/drawer";
+import {
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+    SheetDescription,
+    SheetFooter,
+    SheetClose,
+} from "@/components/ui/sheet";
 import { Plus, Trash2, TrendingUp, TrendingDown, Coins, Wallet } from "lucide-react";
 import { useRefresh } from "@/contexts/refresh-context";
 import { PortfolioTransaction, PriceHistory } from "@/lib/types";
 import { PriceChart } from "@/components/price-chart";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 interface PortfolioClientProps {
     initialRates: { gold: number; silver: number; date: string };
@@ -17,59 +36,15 @@ interface PortfolioClientProps {
 
 export function PortfolioClient({ initialRates, initialHistory, initialTransactions = [] }: PortfolioClientProps) {
     const { registerRefreshHandler } = useRefresh();
-    // Use initialTransactions if available, otherwise empty array
     const [transactions, setTransactions] = useState<PortfolioTransaction[]>(initialTransactions);
-    // If we have initial transactions, we are not loading. If it's empty, we might naturally be empty or loading?
-    // Actually, since we pass data from server, we can say isLoading = false initially.
-    // const [isLoading, setIsLoading] = useState(false); // Removed unused state
     const [selectedTransaction, setSelectedTransaction] = useState<PortfolioTransaction | null>(null);
-    const [isClosing, setIsClosing] = useState(false);
-    const [isExpanded, setIsExpanded] = useState(false);
-    const [touchStart, setTouchStart] = useState<number | null>(null);
-    const [touchEnd, setTouchEnd] = useState<number | null>(null);
-
-    const onTouchStart = (e: React.TouchEvent) => {
-        setTouchEnd(null);
-        setTouchStart(e.targetTouches[0].clientY);
-    };
-
-    const onTouchMove = (e: React.TouchEvent) => {
-        setTouchEnd(e.targetTouches[0].clientY);
-    };
-
-    const onTouchEnd = () => {
-        if (!touchStart || !touchEnd) return;
-        const distance = touchStart - touchEnd;
-        const isDownSwipe = distance < -50;
-        const isUpSwipe = distance > 50;
-
-        if (isDownSwipe) {
-            handleCloseSheet();
-        } else if (isUpSwipe) {
-            setIsExpanded(true);
-        }
-    };
-
-    // Lock body scroll when sheet is open
-    useEffect(() => {
-        if (selectedTransaction) {
-            document.body.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = '';
-        }
-
-        return () => {
-            document.body.style.overflow = '';
-        };
-    }, [selectedTransaction]);
+    const isDesktop = useMediaQuery("(min-width: 768px)");
 
     const rates = initialRates;
     const history = initialHistory;
 
     const fetchTransactions = useCallback(async () => {
         try {
-            // Don't set isLoading to true for background refreshes to avoid UI flicker
-            // setIsLoading(true); 
             const response = await fetch(`/api/portfolio?t=${Date.now()}`, {
                 headers: {
                     "Cache-Control": "no-cache",
@@ -87,32 +62,12 @@ export function PortfolioClient({ initialRates, initialHistory, initialTransacti
 
     // Load Data from Database
     useEffect(() => {
-        // If initialTransactions is empty, we MIGHT want to fetch, but usually server is source of truth.
-        // But for migration from localStorage logic, we should check once.
         if (initialTransactions.length === 0) {
-            // checkMigration(); // Refactored migration logic below
+            // checkMigration(); 
         }
 
-        // Always register refresh handler
         registerRefreshHandler(fetchTransactions);
-
-        // We do NOT call fetchTransactions() on mount because we have initial data from server!
-        // Unless we suspect server data is stale, but we set revalidate=0.
     }, [registerRefreshHandler, fetchTransactions, initialTransactions.length]);
-
-    const handleCloseSheet = () => {
-        setIsClosing(true);
-        setTimeout(() => {
-            setSelectedTransaction(null);
-            setIsClosing(false);
-            setIsExpanded(false);
-        }, 300); // Match animation duration
-    };
-
-    const toggleExpanded = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        setIsExpanded(!isExpanded);
-    };
 
     const handleDelete = async (id: string) => {
         if (!confirm("Are you sure you want to delete this record?")) {
@@ -127,10 +82,12 @@ export function PortfolioClient({ initialRates, initialHistory, initialTransacti
             if (response.ok) {
                 const newTx = transactions.filter(t => t.id !== id);
                 setTransactions(newTx);
+                setSelectedTransaction(null);
             } else if (response.status === 401) {
                 const newTx = transactions.filter(t => t.id !== id);
                 setTransactions(newTx);
                 localStorage.setItem("portfolio_transactions", JSON.stringify(newTx));
+                setSelectedTransaction(null);
             } else {
                 alert('Failed to delete transaction');
             }
@@ -139,6 +96,7 @@ export function PortfolioClient({ initialRates, initialHistory, initialTransacti
             const newTx = transactions.filter(t => t.id !== id);
             setTransactions(newTx);
             localStorage.setItem("portfolio_transactions", JSON.stringify(newTx));
+            setSelectedTransaction(null);
         }
     };
 
@@ -188,6 +146,61 @@ export function PortfolioClient({ initialRates, initialHistory, initialTransacti
             return { date, price: val };
         });
     }, [history, stats.goldQty, stats.silverQty]);
+
+    function TransactionDetailsList({ transaction }: { transaction: PortfolioTransaction }) {
+        return (
+            <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                    <div className={`p-3 rounded-full ${transaction.type === 'buy' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                        {transaction.type === 'buy' ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
+                    </div>
+                    <div>
+                        <div className="text-sm text-muted-foreground">Transaction Type</div>
+                        <div className="font-semibold capitalize text-lg">{transaction.type}</div>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+                    <div>
+                        <div className="text-sm text-muted-foreground">Metal</div>
+                        <div className="font-medium capitalize">{transaction.metal}</div>
+                    </div>
+                    <div>
+                        <div className="text-sm text-muted-foreground">Unit</div>
+                        <div className="font-medium capitalize">{transaction.unit}</div>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <div className="text-sm text-muted-foreground">Quantity</div>
+                        <div className="font-medium">{transaction.quantity}</div>
+                    </div>
+                    <div>
+                        <div className="text-sm text-muted-foreground">Rate per {transaction.unit}</div>
+                        <div className="font-medium">Rs {transaction.rate?.toLocaleString()}</div>
+                    </div>
+                </div>
+
+                <div className="pt-4 border-t">
+                    <div className="text-sm text-muted-foreground">Total Price</div>
+                    <div className="text-2xl font-bold">Rs {transaction.price.toLocaleString()}</div>
+                </div>
+
+                <div>
+                    <div className="text-sm text-muted-foreground">Date</div>
+                    <div className="font-medium">{transaction.date}</div>
+                </div>
+
+                {transaction.notes && (
+                    <div>
+                        <div className="text-sm text-muted-foreground">Notes</div>
+                        <div className="font-medium">{transaction.notes}</div>
+                    </div>
+                )}
+            </div>
+        )
+    }
 
     return (
         <div className="min-h-screen bg-background pb-12">
@@ -288,8 +301,8 @@ export function PortfolioClient({ initialRates, initialHistory, initialTransacti
                                         <div className="flex items-center gap-4">
                                             {/* B/S Avatar */}
                                             <div className={`h-10 w-10 rounded-full flex items-center justify-center shrink-0 font-bold text-lg ${tx.type === 'buy'
-                                                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                                    : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                                : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                                                 }`}>
                                                 {tx.type === 'buy' ? 'B' : 'S'}
                                             </div>
@@ -316,100 +329,58 @@ export function PortfolioClient({ initialRates, initialHistory, initialTransacti
                     </CardContent>
                 </Card>
 
-                {/* Transaction Details Bottom Sheet */}
-                {selectedTransaction && (
-                    <div
-                        className={`fixed inset-0 bg-black/50 flex items-end justify-center z-50 ${isClosing ? 'animate-out fade-out duration-200' : 'animate-in fade-in duration-200'
-                            }`}
-                        onClick={handleCloseSheet}
-                    >
-                        <div
-                            className={`bg-background rounded-t-2xl shadow-lg w-full max-w-2xl p-5 pb-6 transition-all duration-300 ease-in-out ${isClosing ? 'animate-out slide-out-to-bottom duration-300' : 'animate-in slide-in-from-bottom duration-300'
-                                } ${isExpanded ? 'min-h-[50vh] max-h-[90vh]' : 'h-auto max-h-[90vh]'}`}
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            {/* Handle bar & Header Area - Swipeable */}
-                            <div
-                                className="cursor-grab active:cursor-grabbing text-center"
-                                onClick={toggleExpanded}
-                                onTouchStart={onTouchStart}
-                                onTouchMove={onTouchMove}
-                                onTouchEnd={onTouchEnd}
-                            >
-                                <div className="flex justify-center mb-3 py-2 -mt-2">
-                                    <div className={`w-12 h-1 bg-muted-foreground/30 rounded-full transition-colors ${isExpanded ? 'bg-primary/50' : ''}`}></div>
-                                </div>
-
-                                <div className="mb-4">
-                                    <h3 className="text-xl font-bold">Transaction Details</h3>
-                                </div>
-                            </div>
-
-                            <div className={`space-y-3 overflow-y-auto ${isExpanded ? 'h-auto max-h-[80vh]' : 'max-h-[55vh]'}`}>
-                                <div className="flex items-center gap-3">
-                                    <div className={`p-3 rounded-full ${selectedTransaction.type === 'buy' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                                        {selectedTransaction.type === 'buy' ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
-                                    </div>
-                                    <div>
-                                        <div className="text-sm text-muted-foreground">Transaction Type</div>
-                                        <div className="font-semibold capitalize text-lg">{selectedTransaction.type}</div>
+                {/* Transaction Details Sheet (Desktop) / Drawer (Mobile) */}
+                {isDesktop ? (
+                    <Sheet open={!!selectedTransaction} onOpenChange={(open) => !open && setSelectedTransaction(null)}>
+                        <SheetContent side="right">
+                            <SheetHeader>
+                                <SheetTitle>Transaction Details</SheetTitle>
+                                <SheetDescription>View transaction information</SheetDescription>
+                            </SheetHeader>
+                            {selectedTransaction && (
+                                <div className="py-6">
+                                    <TransactionDetailsList transaction={selectedTransaction} />
+                                    <div className="mt-6 pt-6 border-t">
+                                        <Button
+                                            variant="destructive"
+                                            className="w-full"
+                                            onClick={() => handleDelete(selectedTransaction.id)}
+                                        >
+                                            <Trash2 className="h-4 w-4 mr-2" /> Delete Transaction
+                                        </Button>
                                     </div>
                                 </div>
-
-                                <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-                                    <div>
-                                        <div className="text-sm text-muted-foreground">Metal</div>
-                                        <div className="font-medium capitalize">{selectedTransaction.metal}</div>
-                                    </div>
-                                    <div>
-                                        <div className="text-sm text-muted-foreground">Unit</div>
-                                        <div className="font-medium capitalize">{selectedTransaction.unit}</div>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <div className="text-sm text-muted-foreground">Quantity</div>
-                                        <div className="font-medium">{selectedTransaction.quantity}</div>
-                                    </div>
-                                    <div>
-                                        <div className="text-sm text-muted-foreground">Rate per {selectedTransaction.unit}</div>
-                                        <div className="font-medium">Rs {selectedTransaction.rate?.toLocaleString()}</div>
-                                    </div>
-                                </div>
-
-                                <div className="pt-4 border-t">
-                                    <div className="text-sm text-muted-foreground">Total Price</div>
-                                    <div className="text-2xl font-bold">Rs {selectedTransaction.price.toLocaleString()}</div>
-                                </div>
-
-                                <div>
-                                    <div className="text-sm text-muted-foreground">Date</div>
-                                    <div className="font-medium">{selectedTransaction.date}</div>
-                                </div>
-
-                                {selectedTransaction.notes && (
-                                    <div>
-                                        <div className="text-sm text-muted-foreground">Notes</div>
-                                        <div className="font-medium">{selectedTransaction.notes}</div>
+                            )}
+                        </SheetContent>
+                    </Sheet>
+                ) : (
+                    <Drawer open={!!selectedTransaction} onOpenChange={(open) => !open && setSelectedTransaction(null)}>
+                        <DrawerContent>
+                            <DrawerTitle className="sr-only">Transaction Details</DrawerTitle>
+                            <DrawerDescription className="sr-only">View transaction information</DrawerDescription>
+                            <div className="mx-auto w-full max-w-sm pt-6">
+                                {selectedTransaction && (
+                                    <div className="px-4">
+                                        <TransactionDetailsList transaction={selectedTransaction} />
                                     </div>
                                 )}
-
-                                <div className="pt-4 border-t">
-                                    <Button
-                                        variant="destructive"
-                                        className="w-full"
-                                        onClick={() => {
-                                            handleCloseSheet();
-                                            setTimeout(() => handleDelete(selectedTransaction.id), 300);
-                                        }}
-                                    >
-                                        <Trash2 className="h-4 w-4 mr-2" /> Delete Transaction
-                                    </Button>
-                                </div>
+                                <DrawerFooter>
+                                    {selectedTransaction && (
+                                        <Button
+                                            variant="destructive"
+                                            className="w-full"
+                                            onClick={() => handleDelete(selectedTransaction.id)}
+                                        >
+                                            <Trash2 className="h-4 w-4 mr-2" /> Delete Transaction
+                                        </Button>
+                                    )}
+                                    <DrawerClose asChild>
+                                        <Button variant="outline">Close</Button>
+                                    </DrawerClose>
+                                </DrawerFooter>
                             </div>
-                        </div>
-                    </div>
+                        </DrawerContent>
+                    </Drawer>
                 )}
             </div>
         </div>
