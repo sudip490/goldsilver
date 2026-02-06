@@ -5,6 +5,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Header } from "@/components/header";
 import { GlobalRefreshButton } from "@/components/global-refresh-button";
 import { RefreshProvider } from "@/contexts/refresh-context";
+import { PrivacyProvider } from "@/contexts/privacy-context";
 import { ThemeProvider } from "@/components/theme-provider";
 import { MobileNav } from "@/components/mobile-nav";
 import "./globals.css";
@@ -56,12 +57,14 @@ export default function RootLayout({
                     disableTransitionOnChange
                 >
                     <RefreshProvider>
-                        <Header />
-                        <GlobalRefreshButton />
-                        <div className="pt-16 pb-24 md:pb-0 min-h-screen">
-                            {children}
-                        </div>
-                        <MobileNav />
+                        <PrivacyProvider>
+                            <Header />
+                            <GlobalRefreshButton />
+                            <div className="pt-16 pb-24 md:pb-0 min-h-screen">
+                                {children}
+                            </div>
+                            <MobileNav />
+                        </PrivacyProvider>
                     </RefreshProvider>
                     <Analytics />
                     <SpeedInsights />

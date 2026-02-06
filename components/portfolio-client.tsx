@@ -22,7 +22,8 @@ import {
     SheetFooter,
     SheetClose,
 } from "@/components/ui/sheet";
-import { Plus, Trash2, TrendingUp, TrendingDown, Coins, Wallet } from "lucide-react";
+import { Plus, Trash2, TrendingUp, TrendingDown, Coins, Wallet, Download } from "lucide-react";
+import { PrivacyBlur } from "@/components/privacy-blur";
 import { useRefresh } from "@/contexts/refresh-context";
 import { PortfolioTransaction, PriceHistory } from "@/lib/types";
 import { PriceChart } from "@/components/price-chart";
@@ -178,13 +179,17 @@ export function PortfolioClient({ initialRates, initialHistory, initialTransacti
                     </div>
                     <div>
                         <div className="text-sm text-muted-foreground">Rate per {transaction.unit}</div>
-                        <div className="font-medium">Rs {transaction.rate?.toLocaleString()}</div>
+                        <div className="font-medium">
+                            <PrivacyBlur>Rs {transaction.rate?.toLocaleString()}</PrivacyBlur>
+                        </div>
                     </div>
                 </div>
 
                 <div className="pt-4 border-t">
                     <div className="text-sm text-muted-foreground">Total Price</div>
-                    <div className="text-2xl font-bold">Rs {transaction.price.toLocaleString()}</div>
+                    <div className="text-2xl font-bold">
+                        <PrivacyBlur>Rs {transaction.price.toLocaleString()}</PrivacyBlur>
+                    </div>
                 </div>
 
                 <div>
@@ -227,7 +232,9 @@ export function PortfolioClient({ initialRates, initialHistory, initialTransacti
                             <Wallet className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">Rs {stats.netCost.toLocaleString()}</div>
+                            <div className="text-2xl font-bold">
+                                <PrivacyBlur>Rs {stats.netCost.toLocaleString()}</PrivacyBlur>
+                            </div>
                             <p className="text-xs text-muted-foreground">Net cost basis</p>
                         </CardContent>
                     </Card>
@@ -237,9 +244,13 @@ export function PortfolioClient({ initialRates, initialHistory, initialTransacti
                             <Coins className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">Rs {stats.currentValue.toLocaleString()}</div>
+                            <div className="text-2xl font-bold">
+                                <PrivacyBlur>Rs {stats.currentValue.toLocaleString()}</PrivacyBlur>
+                            </div>
                             <p className="text-xs text-muted-foreground">
-                                Gold: {stats.goldQty.toFixed(2)} Tola • Silver: {stats.silverQty.toFixed(2)} Tola
+                                <PrivacyBlur>
+                                    Gold: {stats.goldQty.toFixed(2)} Tola • Silver: {stats.silverQty.toFixed(2)} Tola
+                                </PrivacyBlur>
                             </p>
                         </CardContent>
                     </Card>
@@ -254,10 +265,12 @@ export function PortfolioClient({ initialRates, initialHistory, initialTransacti
                         </CardHeader>
                         <CardContent>
                             <div className={`text-2xl font-bold ${isProfit ? "text-green-600" : "text-red-600"}`}>
-                                {isProfit ? "+" : ""}Rs {stats.profit.toLocaleString()}
+                                <PrivacyBlur>{isProfit ? "+" : ""}Rs {stats.profit.toLocaleString()}</PrivacyBlur>
                             </div>
                             <p className={`text-xs ${isProfit ? "text-green-600" : "text-red-600"}`}>
-                                {isProfit ? "+" : ""}{stats.profitPercent.toFixed(2)}% Return
+                                <PrivacyBlur>
+                                    {isProfit ? "+" : ""}{stats.profitPercent.toFixed(2)}% Return
+                                </PrivacyBlur>
                             </p>
                         </CardContent>
                     </Card>
@@ -270,6 +283,7 @@ export function PortfolioClient({ initialRates, initialHistory, initialTransacti
                             data={portfolioHistory}
                             title="Portfolio Performance (Last 30 Days)"
                             color={isProfit ? "#16a34a" : "#dc2626"}
+                            privacySensitive={true}
                         />
                     </div>
                 )}
@@ -277,11 +291,21 @@ export function PortfolioClient({ initialRates, initialHistory, initialTransacti
                 {/* Transaction History */}
                 <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
                     <h2 className="text-2xl font-bold">Transaction History</h2>
-                    <Link href="/portfolio/add">
-                        <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white">
-                            <Plus className="h-4 w-4" /> Add Transaction
+                    <div className="flex gap-2">
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => import("@/lib/export-utils").then(m => m.exportTransactionsToCSV(transactions))}
+                            title="Export to CSV"
+                        >
+                            <Download className="h-4 w-4" />
                         </Button>
-                    </Link>
+                        <Link href="/portfolio/add">
+                            <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white">
+                                <Plus className="h-4 w-4" /> Add Transaction
+                            </Button>
+                        </Link>
+                    </div>
                 </div>
 
                 <Card>
@@ -320,7 +344,7 @@ export function PortfolioClient({ initialRates, initialHistory, initialTransacti
 
                                         {/* Price Only */}
                                         <div className="font-bold text-lg whitespace-nowrap">
-                                            Rs {tx.price.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                            <PrivacyBlur>Rs {tx.price.toLocaleString(undefined, { maximumFractionDigits: 0 })}</PrivacyBlur>
                                         </div>
                                     </div>
                                 ))}
