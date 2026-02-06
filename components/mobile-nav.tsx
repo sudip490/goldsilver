@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, PieChart, Plus, Wallet } from "lucide-react";
+import { LayoutDashboard, Plus, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function MobileNav() {
