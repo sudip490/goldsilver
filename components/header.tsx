@@ -4,9 +4,10 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useRefresh } from "@/contexts/refresh-context";
+import { usePrivacy } from "@/contexts/privacy-context";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/mode-toggle";
-import { Sparkles, LayoutDashboard, PieChart, RefreshCw, Menu, LogOut, User } from "lucide-react";
+import { Sparkles, LayoutDashboard, PieChart, RefreshCw, Menu, LogOut, User, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UserButton } from "@/components/user-button";
 import {
@@ -20,6 +21,7 @@ import { X } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LoginDialog } from "@/components/login-dialog";
+import { Logo } from "@/components/logo";
 
 
 // Define the PWA install prompt event type
@@ -32,6 +34,7 @@ export function Header() {
     const pathname = usePathname();
     const router = useRouter();
     const { isRefreshing, refresh } = useRefresh();
+    const { isPrivacyMode, togglePrivacyMode } = usePrivacy();
     const { data: session } = authClient.useSession();
     const [isSignOut, setIsSignOut] = useState(false);
     const [showLoginDialog, setShowLoginDialog] = useState(false);
@@ -111,12 +114,7 @@ export function Header() {
                                         </Button>
                                     </SheetClose>
                                     <Link href="/" className="flex items-center gap-2">
-                                        <div className="h-6 w-6 rounded bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center shadow-sm">
-                                            <Sparkles className="h-4 w-4 text-white" />
-                                        </div>
-                                        <span className="font-bold text-sm bg-gradient-to-r from-yellow-600 to-yellow-800 bg-clip-text text-transparent dark:from-yellow-400 dark:to-yellow-200">
-                                            GoldSilverTracker
-                                        </span>
+                                        <Logo withText={true} className="h-6" />
                                     </Link>
                                 </div>
 
@@ -202,14 +200,7 @@ export function Header() {
                         </Sheet>
                     </div>
                     <Link href="/" className="flex items-center gap-2">
-                        <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center shadow-sm">
-                            <Sparkles className="h-5 w-5 text-white" />
-                        </div>
-                        <div>
-                            <h1 className="text-base md:text-lg font-bold tracking-tight bg-gradient-to-r from-yellow-600 to-yellow-800 bg-clip-text text-transparent dark:from-yellow-400 dark:to-yellow-200">
-                                GoldSilverTracker
-                            </h1>
-                        </div>
+                        <Logo withText={true} />
                     </Link>
 
                     <nav className="hidden md:flex items-center gap-1">
@@ -251,6 +242,15 @@ export function Header() {
                     </Button>
 
 
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={togglePrivacyMode}
+                        title={isPrivacyMode ? "Show sensitive data" : "Hide sensitive data"}
+                    >
+                        {isPrivacyMode ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </Button>
+
                     <ModeToggle />
 
 
@@ -261,6 +261,6 @@ export function Header() {
                     <LoginDialog open={showLoginDialog} onOpenChange={setShowLoginDialog} />
                 </div>
             </div>
-        </header>
+        </header >
     );
 }

@@ -13,12 +13,15 @@ import {
     Legend,
 } from "recharts";
 import { format } from "date-fns";
+import { usePrivacy } from "@/contexts/privacy-context";
+import { cn } from "@/lib/utils";
 
 interface PriceChartProps {
     data: PriceHistory[];
     title: string;
     color?: string;
     currency?: string;
+    privacySensitive?: boolean;
 }
 
 export function PriceChart({
@@ -26,7 +29,10 @@ export function PriceChart({
     title,
     color = "#eab308",
     currency = "NPR",
+    privacySensitive = false,
 }: PriceChartProps) {
+    const { isPrivacyMode } = usePrivacy();
+
     const formattedData = data.map((item) => ({
         ...item,
         date: format(new Date(item.date), "MMM dd"),
@@ -38,7 +44,10 @@ export function PriceChart({
                 <CardTitle>{title}</CardTitle>
             </CardHeader>
             <CardContent>
-                <div className="h-[300px] w-full">
+                <div className={cn(
+                    "h-[300px] w-full transition-all duration-300",
+                    isPrivacyMode && privacySensitive && "filter blur-md hover:blur-none"
+                )}>
                     <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={formattedData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
