@@ -163,7 +163,7 @@ export function DashboardClient({ initialData }: DashboardClientProps) {
 
                 {/* Price Charts */}
                 <section className="mb-12">
-                    <h2 className="text-2xl font-bold mb-6">Price Trends (30 Days)</h2>
+                    <h2 className="text-2xl font-bold mb-6">Price Trends</h2>
                     <div className="grid lg:grid-cols-2 gap-6">
                         <PriceChart
                             data={goldHistory}
