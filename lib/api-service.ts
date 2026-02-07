@@ -262,7 +262,8 @@ export async function fetchAsheshRates(): Promise<import("./types").NepalRate[] 
 export async function fetchAsheshHistory(type: 0 | 2 = 0): Promise<import("./types").PriceHistory[]> {
     try {
         console.log(`[Ashesh] Fetching history for type ${type}...`);
-        const url = `https://www.ashesh.com.np/gold/chart.php?api=506&unit=tola&type=${type}&range=30&v=3`;
+        // Fetch 5 years of history (approx 1825 days) to support 1Y and ALL views
+        const url = `https://www.ashesh.com.np/gold/chart.php?api=506&unit=tola&type=${type}&range=1825&v=3`;
 
         const response = await fetch(url, {
             next: { revalidate: 300 }, // Cache for 5 minutes (same as other data)
