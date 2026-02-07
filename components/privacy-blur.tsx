@@ -7,7 +7,7 @@ interface PrivacyBlurProps extends React.HTMLAttributes<HTMLSpanElement> {
     blurIntensity?: "sm" | "md" | "lg";
 }
 
-export function PrivacyBlur({ children, className, blurIntensity = "md", ...props }: PrivacyBlurProps) {
+export function PrivacyBlur({ children, className, ...props }: PrivacyBlurProps) {
     const { isPrivacyMode } = usePrivacy();
 
     return (

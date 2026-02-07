@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import {
     Drawer,
     DrawerContent,
-    DrawerHeader,
     DrawerTitle,
     DrawerDescription,
     DrawerFooter,
@@ -19,8 +18,6 @@ import {
     SheetHeader,
     SheetTitle,
     SheetDescription,
-    SheetFooter,
-    SheetClose,
 } from "@/components/ui/sheet";
 import { Plus, Trash2, TrendingUp, TrendingDown, Coins, Wallet, Download } from "lucide-react";
 import { PrivacyBlur } from "@/components/privacy-blur";

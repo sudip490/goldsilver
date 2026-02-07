@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef, memo } from "react";
+import { useEffect, useRef, memo } from "react";
 import { useTheme } from "next-themes";
-import { Card } from "@/components/ui/card";
 
 interface TradingViewWidgetProps {
     symbol?: string;
