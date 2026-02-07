@@ -7,7 +7,7 @@ import { useRefresh } from "@/contexts/refresh-context";
 import { usePrivacy } from "@/contexts/privacy-context";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/mode-toggle";
-import { Sparkles, LayoutDashboard, PieChart, RefreshCw, Menu, LogOut, User, Eye, EyeOff } from "lucide-react";
+import { Sparkles, LayoutDashboard, PieChart, RefreshCw, Menu, LogOut, User, Eye, EyeOff, LineChart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UserButton } from "@/components/user-button";
 import {
@@ -78,6 +78,12 @@ export function Header() {
             label: "Dashboard",
             icon: LayoutDashboard,
             active: pathname === "/",
+        },
+        {
+            href: "/market",
+            label: "Market",
+            icon: LineChart,
+            active: pathname === "/market",
         },
         {
             href: "/portfolio",

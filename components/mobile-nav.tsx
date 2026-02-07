@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Plus, Wallet } from "lucide-react";
+import { LayoutDashboard, Plus, Wallet, LineChart } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function MobileNav() {
@@ -22,6 +22,19 @@ export function MobileNav() {
                 >
                     <LayoutDashboard className={cn("h-6 w-6", pathname === "/" && "fill-current/20")} strokeWidth={pathname === "/" ? 2.5 : 2} />
                     <span>Home</span>
+                </Link>
+
+                <Link
+                    href="/market"
+                    className={cn(
+                        "flex flex-col items-center justify-center flex-1 h-full gap-1 text-[10px] font-medium transition-colors",
+                        pathname === "/market"
+                            ? "text-primary"
+                            : "text-muted-foreground hover:text-foreground"
+                    )}
+                >
+                    <LineChart className={cn("h-6 w-6", pathname === "/market" && "fill-current/20")} strokeWidth={pathname === "/market" ? 2.5 : 2} />
+                    <span>Market</span>
                 </Link>
 
                 <Link
