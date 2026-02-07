@@ -7,7 +7,7 @@ import { useRefresh } from "@/contexts/refresh-context";
 import { usePrivacy } from "@/contexts/privacy-context";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/mode-toggle";
-import { Sparkles, LayoutDashboard, PieChart, RefreshCw, Menu, LogOut, User, Eye, EyeOff, LineChart } from "lucide-react";
+import { LayoutDashboard, PieChart, RefreshCw, Menu, LogOut, User, Eye, EyeOff, LineChart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UserButton } from "@/components/user-button";
 import {

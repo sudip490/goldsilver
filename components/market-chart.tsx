@@ -2,10 +2,9 @@
 
 import { useState, useMemo } from "react";
 import dynamic from "next/dynamic";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
-import { Coins, CircleDollarSign, Droplets, Bitcoin, Banknote, LineChart, Gem, LayoutGrid, Square, Maximize2, Minimize2 } from "lucide-react";
+import { CircleDollarSign, Droplets, Bitcoin, Banknote, LineChart, Gem, LayoutGrid, Square, Maximize2, Minimize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
