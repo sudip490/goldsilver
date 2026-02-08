@@ -1,0 +1,260 @@
+Debugger listening on ws://127.0.0.1:40605/e93eaa80-dbaa-476d-8b29-3f38bccab20d
+For help, see: https://nodejs.org/en/docs/inspector
+Debugger attached.
+
+> goldprice@1.0.0 build
+> next build
+
+Debugger listening on ws://127.0.0.1:41387/4127696e-c2c3-4001-89b0-6c3697a7523e
+For help, see: https://nodejs.org/en/docs/inspector
+Debugger attached.
+   ▲ Next.js 15.5.12
+   - Environments: .env
+
+   Creating an optimized production build ...
+ ✓ (pwa) Compiling for server...
+ ✓ (pwa) Compiling for server...
+ ✓ (pwa) Compiling for client (static)...
+ ○ (pwa) Service worker: /home/subashg/gold/goldsilver/public/sw.js
+ ○ (pwa)   URL: /sw.js
+ ○ (pwa)   Scope: /
+ ✓ Compiled successfully in 18.0s
+   Linting and checking validity of types ...
+Debugger listening on ws://127.0.0.1:37305/27c1e722-9b97-4b90-b9dd-9e0582b93061
+For help, see: https://nodejs.org/en/docs/inspector
+Debugger listening on ws://127.0.0.1:40081/4cfc66a3-7689-4ac4-a7a2-1dbab07a6751
+For help, see: https://nodejs.org/en/docs/inspector
+Debugger attached.
+Debugger attached.
+   Collecting page data ...
+Debugger listening on ws://127.0.0.1:40789/fa1034e6-f9db-47d5-99b3-8707c1e2a923
+For help, see: https://nodejs.org/en/docs/inspector
+Debugger listening on ws://127.0.0.1:40747/a9ba9f5f-5a30-4c1b-b7e0-499d96e23a05
+For help, see: https://nodejs.org/en/docs/inspector
+Debugger attached.
+Debugger attached.
+Debugger listening on ws://127.0.0.1:44605/4b9da843-b7ab-46a2-be45-e39c9722c87f
+For help, see: https://nodejs.org/en/docs/inspector
+Debugger attached.
+[dotenv@17.2.4] injecting env (0) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+[dotenv@17.2.4] injecting env (0) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+[dotenv@17.2.4] injecting env (0) from .env -- tip: 🔑 add access controls to secrets: https://dotenvx.com/ops
+   Generating static pages (0/9) ...
+Debugger listening on ws://127.0.0.1:45495/f67d6fea-ad3d-4127-889e-cd305026ea55
+For help, see: https://nodejs.org/en/docs/inspector
+Debugger attached.
+Debugger listening on ws://127.0.0.1:35655/5f9045e2-488b-40c5-9b0b-0eabfdca55b0
+For help, see: https://nodejs.org/en/docs/inspector
+Debugger attached.
+Debugger listening on ws://127.0.0.1:45255/3870babb-3b8d-4927-b1ce-4e4556e0f0d6
+For help, see: https://nodejs.org/en/docs/inspector
+Debugger attached.
+[NRB] Attempting API for 2026-02-08...
+[Ashesh] Fetching latest rates from charts...
+[Ashesh] Fetching history for type 0...
+[Ashesh] Fetching history for type 2...
+[dotenv@17.2.4] injecting env (0) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+[NRB] Attempting API for 2026-02-08...
+[Ashesh] Fetching latest rates from charts...
+[Ashesh] Fetching history for type 0...
+[Ashesh] Fetching history for type 2...
+[NRB] Attempting API for 2026-02-08...
+[News] Fetching latest gold news from OnlineKhabar...
+[Ashesh] Found 1825 history points for type 2
+[Ashesh] Found 1825 history points for type 2
+[Ashesh] Found 1825 history points for type 0
+[Ashesh] Found 1825 history points for type 0
+[NRB] API success: 22 rates found.
+[NRB] Processed 23 rates from raw data
+[NRB] API success: 22 rates found.
+[NRB] Processed 23 rates from raw data
+[NRB] API success: 22 rates found.
+   Generating static pages (2/9) 
+   Generating static pages (4/9) 
+   Generating static pages (6/9) 
+[News] Successfully fetched 8 real news articles from OnlineKhabar
+[Ashesh] Rates List: [
+  {
+    key: 'fine-gold-tola',
+    name: 'Fine Gold',
+    unit: 'Tola',
+    price: 300500,
+    change: 0,
+    changePercent: 0,
+    date: '2026-02-08'
+  },
+  {
+    key: 'fine-gold-10-gram',
+    name: 'Fine Gold',
+    unit: '10 Gram',
+    price: 257630,
+    change: 0,
+    changePercent: 0,
+    date: '2026-02-08'
+  },
+  {
+    key: 'tejabi-gold-tola',
+    name: 'Tejabi Gold',
+    unit: 'Tola',
+    price: 297500,
+    change: 0,
+    changePercent: 0,
+    date: '2026-02-08'
+  },
+  {
+    key: 'tejabi-gold-10-gram',
+    name: 'Tejabi Gold',
+    unit: '10 Gram',
+    price: 255053,
+    change: 0,
+    changePercent: 0,
+    date: '2026-02-08'
+  },
+  {
+    key: 'silver-tola',
+    name: 'Silver',
+    unit: 'Tola',
+    price: 5010,
+    change: 0,
+    changePercent: 0,
+    date: '2026-02-08'
+  },
+  {
+    key: 'silver-10-gram',
+    name: 'Silver',
+    unit: '10 Gram',
+    price: 4295,
+    change: 0,
+    changePercent: 0,
+    date: '2026-02-08'
+  }
+]
+[NRB] Attempting API for 2026-02-08...
+[Ashesh] Rates List: [
+  {
+    key: 'fine-gold-tola',
+    name: 'Fine Gold',
+    unit: 'Tola',
+    price: 300500,
+    change: 0,
+    changePercent: 0,
+    date: '2026-02-08'
+  },
+  {
+    key: 'fine-gold-10-gram',
+    name: 'Fine Gold',
+    unit: '10 Gram',
+    price: 257630,
+    change: 0,
+    changePercent: 0,
+    date: '2026-02-08'
+  },
+  {
+    key: 'tejabi-gold-tola',
+    name: 'Tejabi Gold',
+    unit: 'Tola',
+    price: 297500,
+    change: 0,
+    changePercent: 0,
+    date: '2026-02-08'
+  },
+  {
+    key: 'tejabi-gold-10-gram',
+    name: 'Tejabi Gold',
+    unit: '10 Gram',
+    price: 255053,
+    change: 0,
+    changePercent: 0,
+    date: '2026-02-08'
+  },
+  {
+    key: 'silver-tola',
+    name: 'Silver',
+    unit: 'Tola',
+    price: 5010,
+    change: 0,
+    changePercent: 0,
+    date: '2026-02-08'
+  },
+  {
+    key: 'silver-10-gram',
+    name: 'Silver',
+    unit: '10 Gram',
+    price: 4295,
+    change: 0,
+    changePercent: 0,
+    date: '2026-02-08'
+  }
+]
+[NRB] API success: 22 rates found.
+[News] Fetching latest gold news from OnlineKhabar...
+[News] Successfully fetched 8 real news articles from OnlineKhabar
+[NRB] Attempting API for 2026-02-08...
+[Ashesh] Fetching latest rates from charts...
+[Ashesh] Fetching history for type 0...
+[Ashesh] Fetching history for type 2...
+[NRB] API success: 22 rates found.
+[Ashesh] Found 1825 history points for type 0
+[Ashesh] Found 1825 history points for type 2
+[NRB] Processed 23 rates from raw data
+[Ashesh] Rates List: [
+  {
+    key: 'fine-gold-tola',
+    name: 'Fine Gold',
+    unit: 'Tola',
+    price: 300500,
+    change: 0,
+    changePercent: 0,
+    date: '2026-02-08'
+  },
+  {
+    key: 'fine-gold-10-gram',
+    name: 'Fine Gold',
+    unit: '10 Gram',
+    price: 257630,
+    change: 0,
+    changePercent: 0,
+    date: '2026-02-08'
+  },
+  {
+    key: 'tejabi-gold-tola',
+    name: 'Tejabi Gold',
+    unit: 'Tola',
+    price: 297500,
+    change: 0,
+    changePercent: 0,
+    date: '2026-02-08'
+  },
+  {
+    key: 'tejabi-gold-10-gram',
+    name: 'Tejabi Gold',
+    unit: '10 Gram',
+    price: 255053,
+    change: 0,
+    changePercent: 0,
+    date: '2026-02-08'
+  },
+  {
+    key: 'silver-tola',
+    name: 'Silver',
+    unit: 'Tola',
+    price: 5010,
+    change: 0,
+    changePercent: 0,
+    date: '2026-02-08'
+  },
+  {
+    key: 'silver-10-gram',
+    name: 'Silver',
+    unit: '10 Gram',
+    price: 4295,
+    change: 0,
+    changePercent: 0,
+    date: '2026-02-08'
+  }
+]
+ ✓ Generating static pages (9/9)
+   Finalizing page optimization ...
+   Collecting build traces ...
+Waiting for the debugger to disconnect...
+Waiting for the debugger to disconnect...

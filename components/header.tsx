@@ -7,7 +7,7 @@ import { useRefresh } from "@/contexts/refresh-context";
 import { usePrivacy } from "@/contexts/privacy-context";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/mode-toggle";
-import { LayoutDashboard, PieChart, RefreshCw, Menu, LogOut, User, Eye, EyeOff, LineChart } from "lucide-react";
+import { LayoutDashboard, PieChart, RefreshCw, Menu, LogOut, User, Eye, EyeOff, LineChart, Share, PlusSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UserButton } from "@/components/user-button";
 import {
@@ -17,6 +17,13 @@ import {
     SheetClose,
     SheetTitle,
 } from "@/components/ui/sheet";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { X } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -40,8 +47,21 @@ export function Header() {
     const [showLoginDialog, setShowLoginDialog] = useState(false);
 
     const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+    const [isIOS, setIsIOS] = useState(false);
+    const [isStandalone, setIsStandalone] = useState(false);
+    const [showIOSInstall, setShowIOSInstall] = useState(false);
 
     useEffect(() => {
+        // Check for iOS
+        const userAgent = window.navigator.userAgent.toLowerCase();
+        const ios = /iphone|ipad|ipod/.test(userAgent);
+        setIsIOS(ios);
+
+        // Check for standalone mode
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const standalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
+        setIsStandalone(!!standalone);
+
         const handler = (e: Event) => {
             e.preventDefault();
             setDeferredPrompt(e as BeforeInstallPromptEvent);
@@ -145,11 +165,23 @@ export function Header() {
                                         </SheetClose>
                                     ))}
 
-                                    {/* Install App Button */}
+                                    {/* Install App Button (Android/Desktop) */}
                                     {deferredPrompt && (
                                         <Button
                                             variant="ghost"
                                             onClick={handleInstallClick}
+                                            className="w-full justify-start px-4 py-3 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-3 h-5 w-5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></svg>
+                                            Install App
+                                        </Button>
+                                    )}
+
+                                    {/* Install App Button (iOS) */}
+                                    {isIOS && !isStandalone && (
+                                        <Button
+                                            variant="ghost"
+                                            onClick={() => setShowIOSInstall(true)}
                                             className="w-full justify-start px-4 py-3 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
                                         >
                                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-3 h-5 w-5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></svg>
@@ -265,6 +297,43 @@ export function Header() {
                     </div>
 
                     <LoginDialog open={showLoginDialog} onOpenChange={setShowLoginDialog} />
+
+                    {/* iOS Install Dialog */}
+                    <Dialog open={showIOSInstall} onOpenChange={setShowIOSInstall}>
+                        <DialogContent className="sm:max-w-md">
+                            <DialogHeader>
+                                <DialogTitle>Install App</DialogTitle>
+                                <DialogDescription>
+                                    Install this application on your home screen for quick access and a better experience.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="flex flex-col gap-4 py-4">
+                                <div className="flex items-center gap-4">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
+                                        <Share className="h-5 w-5" />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-medium">1. Tap the Share button</span>
+                                        <span className="text-xs text-muted-foreground">Look for the share icon at the bottom of your screen.</span>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
+                                        <PlusSquare className="h-5 w-5" />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-medium">2. Tap &apos;Add to Home Screen&apos;</span>
+                                        <span className="text-xs text-muted-foreground">Scroll down to find this option in the menu.</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex justify-end">
+                                <Button variant="secondary" onClick={() => setShowIOSInstall(false)}>
+                                    Close
+                                </Button>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
                 </div>
             </div>
         </header >
