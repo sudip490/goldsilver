@@ -24,12 +24,13 @@ export function NepalMarketTable({ rates }: NepalMarketTableProps) {
     return (
         <Card className="w-full mt-6">
             <CardHeader className="pb-3 border-b bg-muted/20">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                     <CardTitle className="text-lg font-bold flex items-center gap-2">
-                        <span className="text-2xl">🇳🇵</span> Nepal Market Official Rates
+                        <span className="text-2xl">🇳🇵</span>
+                        <span>Nepal Market Official Rates</span>
                     </CardTitle>
                     {rates.length > 0 && (
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs text-muted-foreground self-start md:self-auto pl-9 md:pl-0">
                             Updated: {rates[0].date}
                         </span>
                     )}
@@ -40,11 +41,11 @@ export function NepalMarketTable({ rates }: NepalMarketTableProps) {
                     <table className="w-full text-sm">
                         <thead>
                             <tr className="border-b bg-muted/50">
-                                <th className="text-left py-3 px-2 md:px-4 font-semibold text-muted-foreground w-[200px]">Metal</th>
-                                <th className="text-left py-3 px-2 md:px-4 font-semibold text-muted-foreground">Unit</th>
-                                <th className="text-right py-3 px-2 md:px-4 font-semibold text-muted-foreground">Price (NPR)</th>
-                                <th className="text-right py-3 px-2 md:px-4 font-semibold text-muted-foreground">Change</th>
-                                <th className="text-right py-3 px-2 md:px-4 font-semibold text-muted-foreground">Date</th>
+                                <th className="text-left py-3 px-2 md:px-4 font-semibold text-muted-foreground w-[200px] whitespace-nowrap">Metal</th>
+                                <th className="text-left py-3 px-2 md:px-4 font-semibold text-muted-foreground whitespace-nowrap">Unit</th>
+                                <th className="text-right py-3 px-2 md:px-4 font-semibold text-muted-foreground whitespace-nowrap">Price (NPR)</th>
+                                <th className="text-right py-3 px-2 md:px-4 font-semibold text-muted-foreground whitespace-nowrap">Change</th>
+                                <th className="text-right py-3 px-2 md:px-4 font-semibold text-muted-foreground whitespace-nowrap">Date</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -53,9 +54,9 @@ export function NepalMarketTable({ rates }: NepalMarketTableProps) {
                                     key={rate.key}
                                     className="border-b last:border-0 hover:bg-muted/30 transition-colors"
                                 >
-                                    <td className="py-3 px-2 md:px-4 font-medium">{rate.name}</td>
-                                    <td className="py-3 px-2 md:px-4 text-muted-foreground">{rate.unit}</td>
-                                    <td className="py-3 px-2 md:px-4 text-right font-bold font-mono text-base">
+                                    <td className="py-3 px-2 md:px-4 font-medium whitespace-nowrap">{rate.name}</td>
+                                    <td className="py-3 px-2 md:px-4 text-muted-foreground whitespace-nowrap">{rate.unit}</td>
+                                    <td className="py-3 px-2 md:px-4 text-right font-bold font-mono text-base whitespace-nowrap">
                                         {formatCurrency(rate.price, "NPR")}
                                     </td>
                                     <td className="py-3 px-2 md:px-4 text-right">
