@@ -1,20 +1,27 @@
-
 import { useEffect, useState } from "react"
 
 export function useMediaQuery(query: string) {
-    const [value, setValue] = useState(false)
+    const [matches, setMatches] = useState<boolean | undefined>(undefined);
 
     useEffect(() => {
-        function onChange(event: MediaQueryListEvent) {
-            setValue(event.matches)
+        // Check if window is defined to prevent issues during SSR
+        if (typeof window === 'undefined') {
+            return;
         }
 
-        const result = matchMedia(query)
-        result.addEventListener("change", onChange)
-        setValue(result.matches)
+        const media = window.matchMedia(query);
 
-        return () => result.removeEventListener("change", onChange)
-    }, [query])
+        // Set initial value
+        setMatches(media.matches);
 
-    return value
+        // Listen for changes
+        const listener = (event: MediaQueryListEvent) => {
+            setMatches(event.matches);
+        };
+
+        media.addEventListener("change", listener);
+        return () => media.removeEventListener("change", listener);
+    }, [query]);
+
+    return matches;
 }
