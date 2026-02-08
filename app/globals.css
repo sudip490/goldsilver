@@ -32,30 +32,47 @@
   }
 
   .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
+    /* Rich Black Backgrounds */
+    --background: 0 0% 4%;
+    --foreground: 45 15% 95%;
+    --card: 0 0% 8%;
+    --card-foreground: 45 15% 95%;
+    --popover: 0 0% 6%;
+    --popover-foreground: 45 15% 95%;
+
+    /* Metallic Gold Primary */
+    --primary: 45 100% 51%;
+    --primary-foreground: 0 0% 10%;
+
+    /* Gold Accents */
+    --secondary: 45 35% 20%;
+    --secondary-foreground: 45 100% 70%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 45 10% 60%;
+    --accent: 45 80% 45%;
+    --accent-foreground: 0 0% 10%;
+
+    /* Destructive with Gold Tint */
+    --destructive: 0 70% 45%;
+    --destructive-foreground: 45 15% 95%;
+
+    /* Borders with Gold Hint */
+    --border: 45 15% 18%;
+    --input: 45 15% 18%;
+    --ring: 45 100% 51%;
+
+    /* Gold-themed Charts */
+    --chart-1: 45 100% 51%;
+    --chart-2: 38 92% 50%;
     --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    --chart-4: 48 96% 53%;
+    --chart-5: 43 74% 49%;
+
+    /* Custom Gold Variables */
+    --gold-metallic: 45 100% 51%;
+    --gold-bright: 51 100% 50%;
+    --gold-dark: 45 80% 35%;
+    --gold-shimmer: 48 100% 70%;
   }
 }
 
@@ -96,31 +113,146 @@
   background-color: hsl(var(--muted-foreground) / 0.5);
 }
 
-/* Gradient backgrounds */
+/* Premium Gold Gradients */
 .gradient-gold {
-  background: linear-gradient(135deg, #fef9c3 0%, #fde047 50%, #ca8a04 100%);
+  background: linear-gradient(135deg, #D4AF37 0%, #FFD700 50%, #C5A028 100%);
+}
+
+.gradient-gold-dark {
+  background: linear-gradient(135deg, #1A1A1A 0%, #2A2416 50%, #1A1A1A 100%);
 }
 
 .gradient-silver {
-  background: linear-gradient(135deg, #f1f5f9 0%, #cbd5e1 50%, #64748b 100%);
+  background: linear-gradient(135deg, #E8E8E8 0%, #C0C0C0 50%, #A8A8A8 100%);
 }
 
-/* Shimmer effect */
+/* Gold Shimmer Effect */
 .shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
   background: linear-gradient(90deg,
-      rgba(255, 255, 255, 0) 0%,
-      rgba(255, 255, 255, 0.2) 20%,
-      rgba(255, 255, 255, 0.5) 60%,
-      rgba(255, 255, 255, 0));
-  background-size: 200% 100%;
-  animation: shimmer 2s infinite;
+      transparent 0%,
+      rgba(212, 175, 55, 0.3) 50%,
+      transparent 100%);
+  animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    left: -100%;
+  }
+
+  100% {
+    left: 100%;
+  }
+}
+
+/* Gold Glow Effect */
+.gold-glow {
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.3),
+    0 0 40px rgba(212, 175, 55, 0.2),
+    0 0 60px rgba(212, 175, 55, 0.1);
+}
+
+.gold-glow-strong {
+  box-shadow: 0 0 30px rgba(255, 215, 0, 0.5),
+    0 0 60px rgba(255, 215, 0, 0.3),
+    0 0 90px rgba(255, 215, 0, 0.2);
+}
+
+/* Gold Text Gradient */
+.text-gold-gradient {
+  background: linear-gradient(135deg, #FFD700, #D4AF37, #C5A028);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Metallic Gold Effect */
+.metallic-gold {
+  background: linear-gradient(145deg,
+      #C5A028 0%,
+      #FFD700 25%,
+      #D4AF37 50%,
+      #FFD700 75%,
+      #C5A028 100%);
+  background-size: 200% 200%;
+  animation: metallic-shine 4s ease-in-out infinite;
+}
+
+@keyframes metallic-shine {
+
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* Premium Card Styling for Dark Mode */
+.dark .premium-card {
+  background: linear-gradient(145deg, #1A1A1A, #0F0F0F);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(212, 175, 55, 0.1);
+}
+
+/* Gold Border Accent */
+.gold-border {
+  border: 2px solid transparent;
+  background: linear-gradient(#1A1A1A, #1A1A1A) padding-box,
+    linear-gradient(135deg, #D4AF37, #FFD700) border-box;
+}
+
+/* Pulse Animation for Gold Elements */
+@keyframes gold-pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+.gold-pulse {
+  animation: gold-pulse 2s ease-in-out infinite;
 }
 
 @layer base {
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Dark mode enhancements */
+  .dark body {
+    background-image: radial-gradient(circle at 50% 0%, rgba(212, 175, 55, 0.05) 0%, transparent 50%);
+  }
+}
+
+/* Screenshot Protection */
+.screenshot-protected {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }

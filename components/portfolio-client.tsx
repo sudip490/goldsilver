@@ -22,6 +22,8 @@ import {
 import { Plus, Trash2, TrendingUp, TrendingDown, Coins, Wallet, Download } from "lucide-react";
 import { PrivacyBlur } from "@/components/privacy-blur";
 import { useRefresh } from "@/contexts/refresh-context";
+import { usePrivacy } from "@/contexts/privacy-context";
+import { useScreenshotProtection } from "@/hooks/use-screenshot-protection";
 import { PortfolioTransaction, PriceHistory } from "@/lib/types";
 import { PriceChart } from "@/components/price-chart";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -34,9 +36,13 @@ interface PortfolioClientProps {
 
 export function PortfolioClient({ initialRates, initialHistory, initialTransactions = [] }: PortfolioClientProps) {
     const { registerRefreshHandler } = useRefresh();
+    const { isPrivacyMode } = usePrivacy();
     const [transactions, setTransactions] = useState<PortfolioTransaction[]>(initialTransactions);
     const [selectedTransaction, setSelectedTransaction] = useState<PortfolioTransaction | null>(null);
     const isDesktop = useMediaQuery("(min-width: 768px)");
+
+    // Enable screenshot protection only on portfolio page when privacy mode is active
+    useScreenshotProtection(isPrivacyMode);
 
     const rates = initialRates;
     const history = initialHistory;
@@ -351,57 +357,59 @@ export function PortfolioClient({ initialRates, initialHistory, initialTransacti
                 </Card>
 
                 {/* Transaction Details Sheet (Desktop) / Drawer (Mobile) */}
-                {isDesktop ? (
-                    <Sheet open={!!selectedTransaction} onOpenChange={(open) => !open && setSelectedTransaction(null)}>
-                        <SheetContent side="right">
-                            <SheetHeader>
-                                <SheetTitle>Transaction Details</SheetTitle>
-                                <SheetDescription>View transaction information</SheetDescription>
-                            </SheetHeader>
-                            {selectedTransaction && (
-                                <div className="py-6">
-                                    <TransactionDetailsList transaction={selectedTransaction} />
-                                    <div className="mt-6 pt-6 border-t">
-                                        <Button
-                                            variant="destructive"
-                                            className="w-full"
-                                            onClick={() => handleDelete(selectedTransaction.id)}
-                                        >
-                                            <Trash2 className="h-4 w-4 mr-2" /> Delete Transaction
-                                        </Button>
-                                    </div>
-                                </div>
-                            )}
-                        </SheetContent>
-                    </Sheet>
-                ) : (
-                    <Drawer open={!!selectedTransaction} onOpenChange={(open) => !open && setSelectedTransaction(null)}>
-                        <DrawerContent>
-                            <DrawerTitle className="sr-only">Transaction Details</DrawerTitle>
-                            <DrawerDescription className="sr-only">View transaction information</DrawerDescription>
-                            <div className="mx-auto w-full max-w-sm pt-6">
+                {isDesktop !== undefined && (
+                    isDesktop ? (
+                        <Sheet open={!!selectedTransaction} onOpenChange={(open) => !open && setSelectedTransaction(null)}>
+                            <SheetContent side="right">
+                                <SheetHeader>
+                                    <SheetTitle>Transaction Details</SheetTitle>
+                                    <SheetDescription>View transaction information</SheetDescription>
+                                </SheetHeader>
                                 {selectedTransaction && (
-                                    <div className="px-4">
+                                    <div className="py-6">
                                         <TransactionDetailsList transaction={selectedTransaction} />
+                                        <div className="mt-6 pt-6 border-t">
+                                            <Button
+                                                variant="destructive"
+                                                className="w-full"
+                                                onClick={() => handleDelete(selectedTransaction.id)}
+                                            >
+                                                <Trash2 className="h-4 w-4 mr-2" /> Delete Transaction
+                                            </Button>
+                                        </div>
                                     </div>
                                 )}
-                                <DrawerFooter>
+                            </SheetContent>
+                        </Sheet>
+                    ) : (
+                        <Drawer open={!!selectedTransaction} onOpenChange={(open) => !open && setSelectedTransaction(null)}>
+                            <DrawerContent>
+                                <DrawerTitle className="sr-only">Transaction Details</DrawerTitle>
+                                <DrawerDescription className="sr-only">View transaction information</DrawerDescription>
+                                <div className="mx-auto w-full max-w-sm pt-6">
                                     {selectedTransaction && (
-                                        <Button
-                                            variant="destructive"
-                                            className="w-full"
-                                            onClick={() => handleDelete(selectedTransaction.id)}
-                                        >
-                                            <Trash2 className="h-4 w-4 mr-2" /> Delete Transaction
-                                        </Button>
+                                        <div className="px-4">
+                                            <TransactionDetailsList transaction={selectedTransaction} />
+                                        </div>
                                     )}
-                                    <DrawerClose asChild>
-                                        <Button variant="outline">Close</Button>
-                                    </DrawerClose>
-                                </DrawerFooter>
-                            </div>
-                        </DrawerContent>
-                    </Drawer>
+                                    <DrawerFooter>
+                                        {selectedTransaction && (
+                                            <Button
+                                                variant="destructive"
+                                                className="w-full"
+                                                onClick={() => handleDelete(selectedTransaction.id)}
+                                            >
+                                                <Trash2 className="h-4 w-4 mr-2" /> Delete Transaction
+                                            </Button>
+                                        )}
+                                        <DrawerClose asChild>
+                                            <Button variant="outline">Close</Button>
+                                        </DrawerClose>
+                                    </DrawerFooter>
+                                </div>
+                            </DrawerContent>
+                        </Drawer>
+                    )
                 )}
             </div>
         </div>
