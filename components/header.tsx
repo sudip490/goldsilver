@@ -7,7 +7,7 @@ import { useRefresh } from "@/contexts/refresh-context";
 import { usePrivacy } from "@/contexts/privacy-context";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/mode-toggle";
-import { LayoutDashboard, PieChart, RefreshCw, Menu, LogOut, User, Eye, EyeOff, LineChart, Share, PlusSquare } from "lucide-react";
+import { LayoutDashboard, PieChart, RefreshCw, Menu, LogOut, User, Eye, EyeOff, LineChart, Share, PlusSquare, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UserButton } from "@/components/user-button";
 import {
@@ -110,6 +110,12 @@ export function Header() {
             label: "Portfolio",
             icon: PieChart,
             active: pathname === "/portfolio",
+        },
+        {
+            href: "/finance-log",
+            label: "Finance Log",
+            icon: BookOpen,
+            active: pathname === "/finance-log" || pathname.startsWith("/finance-log/"),
         },
     ];
 
