@@ -101,3 +101,67 @@ export interface GoldPriceOrgData {
         [key: string]: unknown;
     }>;
 }
+
+// Finance Log Types
+export type PartyType = 'customer' | 'supplier' | 'staff' | 'personal';
+export type TransactionType = 'gave' | 'got';
+
+export interface FinanceLogParty {
+    id: string;
+    userId: string;
+    name: string;
+    phone?: string;
+    email?: string;
+    type: PartyType;
+    notes?: string;
+    balance?: number; // Calculated field: positive = they owe you, negative = you owe them
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface FinanceLogTransaction {
+    id: string;
+    userId: string;
+    partyId: string;
+    type: TransactionType;
+    amount: number;
+    date: Date;
+    description: string;
+    notes?: string;
+    attachmentUrl?: string;
+    createdAt: Date;
+    updatedAt: Date;
+    partyName?: string; // For display purposes
+}
+
+export interface FinanceLogBalance {
+    totalReceivable: number; // Total "You'll Get" (positive balances)
+    totalPayable: number;    // Total "You'll Give" (negative balances)
+    netBalance: number;      // Receivable - Payable
+}
+
+export interface Budget {
+    id: string;
+    userId: string;
+    name: string;
+    amount: number;
+    period: 'monthly' | 'yearly' | 'custom';
+    categoryId?: string;
+    startDate: Date;
+    endDate?: Date;
+    isActive: boolean;
+    alertThreshold: number;
+    totalSpent?: number; // Calculated field
+    createdAt?: Date;
+    updatedAt?: Date;
+}
+
+export interface Category {
+    id: string;
+    userId: string;
+    name: string;
+    icon: string;
+    color?: string;
+    createdAt?: Date;
+    updatedAt?: Date;
+}

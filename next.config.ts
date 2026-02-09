@@ -3,10 +3,12 @@ import path from "path";
 
 const withPWA = require("@ducanh2912/next-pwa").default({
     dest: "public",
-    disable: false,
+    disable: process.env.NODE_ENV === "development",
     register: true,
     skipWaiting: true,
+    buildExcludes: [/app-build-manifest\.json$/],
     runtimeCaching: [
+
         {
             urlPattern: /^https:\/\/fonts\.(?:gstatic)\.com\/.*/i,
             handler: "CacheFirst",
@@ -123,3 +125,4 @@ const nextConfig: NextConfig = {
 };
 
 export default withPWA(nextConfig);
+

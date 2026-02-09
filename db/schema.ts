@@ -130,3 +130,55 @@ export const portfolioTransactionRelations = relations(portfolioTransaction, ({ 
 export const userPortfolioRelations = relations(user, ({ many }) => ({
     portfolioTransactions: many(portfolioTransaction),
 }));
+
+// Khata Party (Customers, Suppliers, Staff, Personal contacts)
+export const khataParty = pgTable(
+    "khata_party",
+    {
+        id: text("id").primaryKey(),
+        userId: text("user_id").notNull(),
+        name: text("name").notNull(),
+        phone: text("phone"),
+        email: text("email"),
+        type: text("type").notNull(), // 'customer', 'supplier', 'staff', 'personal'
+        notes: text("notes"),
+        createdAt: timestamp("created_at")
+            .notNull()
+            .defaultNow(),
+        updatedAt: timestamp("updated_at")
+            .notNull()
+            .defaultNow(),
+    },
+    (table) => ({
+        userIdIdx: index("idx_khata_party_user").on(table.userId),
+        typeIdx: index("idx_khata_party_type").on(table.type),
+    })
+);
+
+// Khata Transactions (You Gave / You Got)
+export const khataTransaction = pgTable(
+    "khata_transaction",
+    {
+        id: text("id").primaryKey(),
+        userId: text("user_id").notNull(),
+        partyId: text("party_id").notNull(),
+        type: text("type").notNull(), // 'gave' (debit), 'got' (credit)
+        amount: real("amount").notNull(),
+        date: timestamp("date").notNull(),
+        description: text("description").notNull(),
+        notes: text("notes"),
+        attachmentUrl: text("attachment_url"),
+        createdAt: timestamp("created_at")
+            .notNull()
+            .defaultNow(),
+        updatedAt: timestamp("updated_at")
+            .notNull()
+            .defaultNow(),
+    },
+    (table) => ({
+        userIdIdx: index("idx_khata_transaction_user").on(table.userId),
+        partyIdIdx: index("idx_khata_transaction_party").on(table.partyId),
+        dateIdx: index("idx_khata_transaction_date").on(table.date),
+    })
+);
+

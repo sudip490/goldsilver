@@ -15,6 +15,13 @@
       "when": 1770259532665,
       "tag": "0001_good_karnak",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1770617373958,
+      "tag": "0002_nappy_risque",
+      "breakpoints": true
     }
   ]
 }
