@@ -47,8 +47,7 @@ export async function DELETE(
             .where(eq(khataTransaction.id, transactionId));
 
         return NextResponse.json({ message: "Transaction deleted successfully" });
-    } catch (error) {
-        console.error("Error deleting transaction:", error);
+    } catch {
         return NextResponse.json(
             { error: "Failed to delete transaction" },
             { status: 500 }

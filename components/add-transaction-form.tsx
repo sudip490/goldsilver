@@ -117,8 +117,7 @@ export function AddTransactionForm({ currentRates }: AddTransactionFormProps) {
                 alert('Failed to add transaction');
                 setIsSubmitting(false);
             }
-        } catch (error) {
-            console.error('Error adding transaction:', error);
+        } catch {
             // Fallback to localStorage
             const newTx: PortfolioTransaction = {
                 id: Date.now().toString(),

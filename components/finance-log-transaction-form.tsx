@@ -45,8 +45,7 @@ export function FinanceLogTransactionForm({ partyId, onSuccess, onCancel }: Fina
 
             setFormData({ partyId: partyId || "", type: "got", amount: "", date: new Date().toISOString().split("T")[0], description: "", notes: "" });
             onSuccess();
-        } catch (error) {
-            console.error(error);
+        } catch {
             alert("Failed to record transaction");
         } finally {
             setIsLoading(false);

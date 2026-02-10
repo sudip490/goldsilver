@@ -52,8 +52,7 @@ export async function GET(req: NextRequest) {
             netBalance: Number(summary.totalreceivable || 0) - Number(summary.totalpayable || 0)
         });
 
-    } catch (error) {
-        console.error("Error fetching finance log dashboard:", error);
+    } catch {
         return NextResponse.json(
             { error: "Failed to fetch dashboard data" },
             { status: 500 }

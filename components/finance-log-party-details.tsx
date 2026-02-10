@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Download, Phone, Trash2, TrendingUp, TrendingDown } from "lucide-react";
+import { ArrowLeft, Plus, Download, Phone, Trash2, TrendingUp, TrendingDown, Share2 } from "lucide-react";
 import { FinanceLogParty, FinanceLogTransaction } from "@/lib/types";
 import { FinanceLogTransactionForm } from "./finance-log-transaction-form";
 import { formatCurrency } from "@/lib/utils";
@@ -82,6 +82,7 @@ export function FinanceLogPartyDetails() {
     const [isLoading, setIsLoading] = useState(true);
     const [showAddTransaction, setShowAddTransaction] = useState(false);
     const [selectedTransaction, setSelectedTransaction] = useState<FinanceLogTransaction | null>(null);
+    const [isGeneratingLink, setIsGeneratingLink] = useState(false);
 
     const fetchData = useCallback(async (showLoading = true) => {
         if (showLoading) setIsLoading(true);
@@ -93,7 +94,7 @@ export function FinanceLogPartyDetails() {
                 const partyData = await partyRes.json();
                 setParty(partyData);
             } else {
-                console.error("Party not found");
+                // Party not found
                 // Optionally handle redirect or error state here
             }
 
@@ -102,8 +103,8 @@ export function FinanceLogPartyDetails() {
                 const txData = await txRes.json();
                 setTransactions(txData);
             }
-        } catch (error) {
-            console.error("Error fetching details:", error);
+        } catch {
+            // Error fetching details
         } finally {
             if (showLoading) setIsLoading(false);
         }
@@ -147,8 +148,7 @@ export function FinanceLogPartyDetails() {
             // Optional: Silent revalidate to ensure data consistency
             fetchData(false);
 
-        } catch (e) {
-            console.error(e);
+        } catch {
             alert("Failed to delete transaction. Restoring...");
             // Rollback on error
             setTransactions(previousTransactions);
@@ -172,9 +172,95 @@ export function FinanceLogPartyDetails() {
             } else {
                 alert("Failed to delete contact");
             }
-        } catch (e) {
-            console.error(e);
+        } catch {
             alert("An error occurred while deleting");
+        }
+    };
+
+
+    const handleGenerateShareLink = async () => {
+        if (!party) return; // Guard against null party
+
+        // If party has email, ask if they want to send via email
+        if (party.email) {
+            const sendViaEmail = confirm(
+                `Send statement to ${party.email}?\n\n` +
+                `✓ YES - Send link via email to ${party.name}\n` +
+                `✗ NO - Just copy link to clipboard\n\n` +
+                `The customer will receive a link to view their account statement.`
+            );
+
+            setIsGeneratingLink(true);
+            try {
+                const res = await fetch('/api/finance-log/share', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        partyId,
+                        sendEmail: sendViaEmail
+                    }),
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+
+                    // Copy to clipboard
+                    await navigator.clipboard.writeText(data.shareUrl);
+
+                    if (sendViaEmail) {
+                        alert(
+                            `✅ Email sent to ${party.email}!\n\n` +
+                            `The link has also been copied to your clipboard.\n\n` +
+                            `Share link:\n${data.shareUrl}`
+                        );
+                    } else {
+                        alert(
+                            `✅ Share link copied to clipboard!\n\n` +
+                            `You can now send this link via WhatsApp, SMS, or any messaging app.\n\n` +
+                            `Share link:\n${data.shareUrl}`
+                        );
+                    }
+                } else {
+                    const errorData = await res.json();
+                    alert(`Failed to generate share link\n\n${errorData.details || errorData.error || ''}`);
+                }
+            } catch (error) {
+                alert('An error occurred while generating share link');
+                console.error('Share link error:', error);
+            } finally {
+                setIsGeneratingLink(false);
+            }
+        } else {
+            // No email - just generate and copy link
+            setIsGeneratingLink(true);
+            try {
+                const res = await fetch('/api/finance-log/share', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ partyId }),
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+
+                    // Copy to clipboard
+                    await navigator.clipboard.writeText(data.shareUrl);
+                    alert(
+                        `✅ Share link copied to clipboard!\n\n` +
+                        `You can now send this link via WhatsApp, SMS, or any messaging app.\n\n` +
+                        `💡 Tip: Add an email address to this contact to send statements automatically!\n\n` +
+                        `Share link:\n${data.shareUrl}`
+                    );
+                } else {
+                    const errorData = await res.json();
+                    alert(`Failed to generate share link\n\n${errorData.details || errorData.error || ''}`);
+                }
+            } catch (error) {
+                alert('An error occurred while generating share link');
+                console.error('Share link error:', error);
+            } finally {
+                setIsGeneratingLink(false);
+            }
         }
     };
 
@@ -206,6 +292,15 @@ export function FinanceLogPartyDetails() {
                     )}
                 </div>
                 <div className="ml-auto flex gap-2">
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={handleGenerateShareLink}
+                        disabled={isGeneratingLink}
+                        title="Share Statement"
+                    >
+                        <Share2 className="h-4 w-4" />
+                    </Button>
                     <Button variant="destructive" size="icon" onClick={handleDeleteParty} title="Delete Contact">
                         <Trash2 className="h-4 w-4" />
                     </Button>

@@ -28,8 +28,7 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
                 provider: "google",
                 callbackURL: "/portfolio", // Redirect to portfolio after login
             });
-        } catch (err) {
-            console.error("Login failed:", err);
+        } catch {
             setError("Failed to sign in with Google. Please try again.");
             setIsLoading(false);
         }

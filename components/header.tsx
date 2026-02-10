@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRefresh } from "@/contexts/refresh-context";
 import { usePrivacy } from "@/contexts/privacy-context";
 import { Button } from "@/components/ui/button";
@@ -92,7 +92,7 @@ export function Header() {
         setIsSignOut(false);
     };
 
-    const routes = [
+    const routes = useMemo(() => [
         {
             href: "/",
             label: "Dashboard",
@@ -117,7 +117,7 @@ export function Header() {
             icon: BookOpen,
             active: pathname === "/finance-log" || pathname.startsWith("/finance-log/"),
         },
-    ];
+    ], [pathname]);
 
     return (
         <header className="fixed top-0 left-0 right-0 z-50 border-b bg-white/80 backdrop-blur-md dark:bg-slate-950/80">

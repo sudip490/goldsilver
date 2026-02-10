@@ -76,8 +76,7 @@ export function DashboardClient({ initialData }: DashboardClientProps) {
                 setNews(data.news);
             }
             setLastUpdated(new Date());
-        } catch (err) {
-            console.error("Error fetching prices:", err);
+        } catch {
             setError("Failed to load real-time prices. Please try again.");
         } finally {
             setLoading(false);

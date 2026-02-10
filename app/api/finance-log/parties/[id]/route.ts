@@ -57,8 +57,7 @@ export async function GET(
         }
 
         return NextResponse.json(party[0]);
-    } catch (error) {
-        console.error("Error fetching party:", error);
+    } catch {
         return NextResponse.json(
             { error: "Failed to fetch party" },
             { status: 500 }
@@ -125,8 +124,7 @@ export async function DELETE(
             );
 
         return NextResponse.json({ message: "Party and transactions deleted successfully" });
-    } catch (error) {
-        console.error("Error deleting party:", error);
+    } catch {
         return NextResponse.json(
             { error: "Failed to delete party" },
             { status: 500 }

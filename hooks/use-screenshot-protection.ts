@@ -28,7 +28,6 @@ export function useScreenshotProtection(isPrivacyMode: boolean) {
         const handleVisibilityChange = () => {
             if (document.hidden && isPrivacyMode) {
                 // User might be taking a screenshot
-                console.log('Potential screenshot detected');
             }
         };
 

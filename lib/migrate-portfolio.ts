@@ -59,11 +59,10 @@ export async function migrateLocalStorageToDatabase() {
             };
         }
     } catch (error) {
-        console.error("Migration error:", error);
         return {
             success: false,
             message: "Failed to migrate data",
-            error,
+            error: error instanceof Error ? error.message : String(error),
         };
     }
 }

@@ -41,8 +41,7 @@ export async function GET(req: NextRequest) {
             .orderBy(desc(khataParty.updatedAt));
 
         return NextResponse.json(results);
-    } catch (error) {
-        console.error("Error fetching finance log parties:", error);
+    } catch {
         return NextResponse.json(
             { error: "Failed to fetch parties" },
             { status: 500 }
@@ -85,8 +84,7 @@ export async function POST(req: NextRequest) {
             .returning();
 
         return NextResponse.json(newParty[0], { status: 201 });
-    } catch (error) {
-        console.error("Error creating party:", error);
+    } catch {
         return NextResponse.json(
             { error: "Failed to create party" },
             { status: 500 }

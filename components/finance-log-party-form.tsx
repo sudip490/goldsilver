@@ -43,8 +43,7 @@ export function FinanceLogPartyForm({ onSuccess, onCancel }: FinanceLogPartyForm
 
             setFormData({ name: "", phone: "", email: "", type: "customer", notes: "" });
             onSuccess();
-        } catch (error) {
-            console.error(error);
+        } catch {
             alert("Failed to create contact");
         } finally {
             setIsLoading(false);
@@ -91,6 +90,20 @@ export function FinanceLogPartyForm({ onSuccess, onCancel }: FinanceLogPartyForm
                         </SelectContent>
                     </Select>
                 </div>
+            </div>
+
+            <div className="space-y-2">
+                <Label htmlFor="email">Email (Gmail)</Label>
+                <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="customer@gmail.com (optional)"
+                />
+                <p className="text-xs text-muted-foreground">
+                    Add email to send account statements directly to this contact
+                </p>
             </div>
 
             <div className="space-y-2">
