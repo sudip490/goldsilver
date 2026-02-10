@@ -59,8 +59,8 @@ export function PortfolioClient({ initialRates, initialHistory, initialTransacti
                 const data = await response.json();
                 setTransactions(data.transactions || []);
             }
-        } catch (error) {
-            console.error('Error fetching transactions:', error);
+        } catch {
+            // Error fetching transactions
         }
     }, []);
 
@@ -95,8 +95,7 @@ export function PortfolioClient({ initialRates, initialHistory, initialTransacti
             } else {
                 alert('Failed to delete transaction');
             }
-        } catch (error) {
-            console.error('Error deleting transaction:', error);
+        } catch {
             const newTx = transactions.filter(t => t.id !== id);
             setTransactions(newTx);
             localStorage.setItem("portfolio_transactions", JSON.stringify(newTx));

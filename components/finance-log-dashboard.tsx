@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "./ui/badge";
-import { ArrowUpRight, ArrowDownLeft, Search, UserPlus } from "lucide-react";
+import { ArrowUpRight, ArrowDownLeft, Search, UserPlus, User } from "lucide-react";
 import { FinanceLogParty, FinanceLogBalance } from "@/lib/types";
 import { FinanceLogPartyForm } from "./finance-log-party-form";
 import Link from "next/link";
@@ -48,8 +48,8 @@ function FinanceLogDashboardContent() {
                 setParties(partiesData);
                 setSummary(summaryData);
             }
-        } catch (error) {
-            console.error("Failed to fetch khata data", error);
+        } catch {
+            // Error fetching data
         } finally {
             setIsLoading(false);
         }
@@ -71,6 +71,12 @@ function FinanceLogDashboardContent() {
                 </div>
                 <div className="flex gap-2">
                     <CurrencySelector />
+                    <Link href="/finance-log/my-account">
+                        <Button variant="outline">
+                            <User className="h-4 w-4 mr-2" />
+                            My Account
+                        </Button>
+                    </Link>
                     <Button onClick={() => setShowAddParty(true)}>
                         <UserPlus className="h-4 w-4 mr-2" />
                         Add Contact

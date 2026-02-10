@@ -18,8 +18,7 @@ export async function fetchGoldPriceOrgData(): Promise<GoldPriceOrgData | null> 
 
         const data = await response.json() as GoldPriceOrgData;
         return data;
-    } catch (error) {
-        console.error("Error fetching from GoldPrice.org:", error);
+    } catch {
         return null;
     }
 }
@@ -60,11 +59,9 @@ async function fetchNRBRates(): Promise<Record<string, number>> {
             rates[code] = usdBuyNPR / buyNPR;
         });
 
-        console.log(`[NRB] Processed ${Object.keys(rates).length} rates from raw data`);
         return rates;
 
-    } catch (error) {
-        console.error("Error fetching NRB rates:", error instanceof Error ? error.message : String(error));
+    } catch {
         return {};
     }
 }
@@ -75,7 +72,6 @@ export async function fetchNRBRatesRaw(): Promise<NRBRawRate[]> {
         const today = new Date().toISOString().split('T')[0];
 
         // Try API first
-        console.log(`[NRB] Attempting API for ${today}...`);
         const response = await fetch(
             `https://www.nrb.org.np/api/forex/v1/rate?from=${today}&to=${today}&per_page=1`,
             { next: { revalidate: 60 } }
@@ -98,12 +94,10 @@ export async function fetchNRBRatesRaw(): Promise<NRBRawRate[]> {
         }
 
         if (rates.length > 0) {
-            console.log(`[NRB] API success: ${rates.length} rates found.`);
             return rates;
         }
 
         // Fallback to Scraping
-        console.log("[NRB] API returned no data, switching to scraping...");
         const scrapeResponse = await fetch("https://www.nrb.org.np/forex/", {
             next: { revalidate: 300 },
             // @ts-expect-error - Node.js https agent not available in Edge runtime
@@ -176,11 +170,9 @@ export async function fetchNRBRatesRaw(): Promise<NRBRawRate[]> {
             }
         });
 
-        console.log(`[NRB] Scraped ${scrapedRates.length} rates.`);
         return scrapedRates;
 
-    } catch (error) {
-        console.error("Error fetching raw NRB rates:", error);
+    } catch {
         return [];
     }
 }
@@ -188,7 +180,6 @@ export async function fetchNRBRatesRaw(): Promise<NRBRawRate[]> {
 // Fetch latest rates from Ashesh.com.np (using chart API as reliable source)
 export async function fetchAsheshRates(): Promise<import("./types").NepalRate[] | null> {
     try {
-        console.log("[Ashesh] Fetching latest rates from charts...");
         const ratesList: import("./types").NepalRate[] = [];
         const today = new Date().toISOString().split('T')[0];
 
@@ -248,11 +239,9 @@ export async function fetchAsheshRates(): Promise<import("./types").NepalRate[] 
         const silver10g = await getPrice(2, "gram");
         addRate("Silver", "10 Gram", silver10g);
 
-        console.log("[Ashesh] Rates List:", ratesList);
         return ratesList.length > 0 ? ratesList : null;
 
-    } catch (error) {
-        console.error("Error fetching Ashesh rates:", error);
+    } catch {
         return null;
     }
 }
@@ -261,7 +250,6 @@ export async function fetchAsheshRates(): Promise<import("./types").NepalRate[] 
 // Type 0 = Gold, Type 2 = Silver
 export async function fetchAsheshHistory(type: 0 | 2 = 0): Promise<import("./types").PriceHistory[]> {
     try {
-        console.log(`[Ashesh] Fetching history for type ${type}...`);
         // Fetch 5 years of history (approx 1825 days) to support 1Y and ALL views
         const url = `https://www.ashesh.com.np/gold/chart.php?api=506&unit=tola&type=${type}&range=1825&v=3`;
 
@@ -300,11 +288,9 @@ export async function fetchAsheshHistory(type: 0 | 2 = 0): Promise<import("./typ
             }
         }
 
-        console.log(`[Ashesh] Found ${history.length} history points for type ${type}`);
         return history.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-    } catch (error) {
-        console.error("Error fetching Ashesh history:", error);
+    } catch {
         return [];
     }
 }
@@ -318,7 +304,6 @@ export async function fetchExchangeRates(): Promise<Record<string, number>> {
             return nrbRates;
         }
 
-        console.warn("[Rates] NRB failed or returned empty, trying fallback API...");
 
         // Fallback to ExchangeRate-API
         const response = await fetch(
@@ -341,9 +326,7 @@ export async function fetchExchangeRates(): Promise<Record<string, number>> {
         }
 
         throw new Error("Fallback API returned no rates");
-    } catch (error) {
-        console.error("Error fetching exchange rates:", error);
-        console.warn("[Rates] Using static fallback values");
+    } catch {
         return CURRENCY_TO_NPR; // Final Fallback to static rates
     }
 }
@@ -1044,7 +1027,6 @@ export async function fetchAllMetalPrices(): Promise<{
                 date: today,
                 price: todayGoldPrice
             });
-            console.log(`[History] Added today's gold price: ${todayGoldPrice} NPR on ${today}`);
         }
 
         // Add today's price to silver history if we have it and it's not already there
@@ -1053,7 +1035,6 @@ export async function fetchAllMetalPrices(): Promise<{
                 date: today,
                 price: todaySilverPrice
             });
-            console.log(`[History] Added today's silver price: ${todaySilverPrice} NPR on ${today}`);
         }
 
         // Sort histories by date
@@ -1067,10 +1048,9 @@ export async function fetchAllMetalPrices(): Promise<{
             goldHistory,
             silverHistory
         };
-    } catch (error) {
-        console.error("Error fetching metal prices:", error);
+    } catch {
         // Return empty array or throw error
-        throw error;
+        throw new Error('Failed to fetch metal prices');
     }
 }
 
@@ -1120,7 +1100,6 @@ export async function fetchGoldSilverNews(): Promise<import("./types").NewsItem[
     const allNews: import("./types").NewsItem[] = [];
 
     try {
-        console.log("[News] Fetching latest gold news from OnlineKhabar...");
 
         const seenTitles = new Set<string>();
 
@@ -1190,8 +1169,7 @@ export async function fetchGoldSilverNews(): Promise<import("./types").NewsItem[
                     }
                 });
             }
-        } catch (error) {
-            console.error('[News] OnlineKhabar fetch failed:', error);
+        } catch {
         }
 
         // Also try business section if we don't have enough Nepal news
@@ -1250,23 +1228,19 @@ export async function fetchGoldSilverNews(): Promise<import("./types").NewsItem[
                         }
                     });
                 }
-            } catch (error) {
-                console.error('[News] OnlineKhabar business fetch failed:', error);
+            } catch {
             }
         }
 
         // Return only real scraped news from OnlineKhabar
         if (allNews.length > 0) {
-            console.log(`[News] Successfully fetched ${allNews.length} real news articles from OnlineKhabar`);
             return allNews.slice(0, 10); // Return up to 10 real articles
         }
 
         // If no news found, return empty array
-        console.log("[News] No gold/silver news found on OnlineKhabar");
         return [];
 
-    } catch (error) {
-        console.error('[News] Error in news fetching:', error);
+    } catch {
 
         // Return empty array on error
         return [];

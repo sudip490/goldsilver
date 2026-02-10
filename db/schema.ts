@@ -142,6 +142,8 @@ export const khataParty = pgTable(
         email: text("email"),
         type: text("type").notNull(), // 'customer', 'supplier', 'staff', 'personal'
         notes: text("notes"),
+        shareToken: text("share_token"),
+        shareTokenCreatedAt: timestamp("share_token_created_at"),
         createdAt: timestamp("created_at")
             .notNull()
             .defaultNow(),
@@ -152,6 +154,7 @@ export const khataParty = pgTable(
     (table) => ({
         userIdIdx: index("idx_khata_party_user").on(table.userId),
         typeIdx: index("idx_khata_party_type").on(table.type),
+        shareTokenIdx: index("idx_khata_party_share_token").on(table.shareToken),
     })
 );
 

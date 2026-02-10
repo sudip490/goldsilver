@@ -70,8 +70,7 @@ export function useHaptic(): UseHapticReturn {
 
             // Trigger vibration
             navigator.vibrate(vibrationPattern);
-        } catch (error) {
-            console.warn('Haptic feedback failed:', error);
+        } catch {
         }
     }, [isSupported, isEnabled]);
 

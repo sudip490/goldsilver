@@ -37,8 +37,7 @@ export async function GET(req: NextRequest) {
 
         const transactions = await query;
         return NextResponse.json(transactions);
-    } catch (error) {
-        console.error("Error fetching transactions:", error);
+    } catch {
         return NextResponse.json(
             { error: "Failed to fetch transactions" },
             { status: 500 }
@@ -91,8 +90,7 @@ export async function POST(req: NextRequest) {
             .returning();
 
         return NextResponse.json(newTransaction[0], { status: 201 });
-    } catch (error) {
-        console.error("Error creating transaction:", error);
+    } catch {
         return NextResponse.json(
             { error: "Failed to create transaction" },
             { status: 500 }

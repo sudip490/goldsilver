@@ -22,8 +22,7 @@ export async function GET() {
             news,
             timestamp: new Date().toISOString(),
         });
-    } catch (error) {
-        console.error("API Error:", error);
+    } catch {
         return NextResponse.json({ error: "Failed to fetch data" }, { status: 500 });
     }
 }

@@ -25,8 +25,7 @@ export async function GET(request: NextRequest) {
             .orderBy(desc(portfolioTransaction.date));
 
         return NextResponse.json({ transactions });
-    } catch (error) {
-        console.error("Error fetching portfolio transactions:", error);
+    } catch {
         return NextResponse.json(
             { error: "Failed to fetch transactions" },
             { status: 500 }
@@ -76,8 +75,7 @@ export async function POST(request: NextRequest) {
             .returning();
 
         return NextResponse.json({ transaction: newTransaction[0] }, { status: 201 });
-    } catch (error) {
-        console.error("Error creating portfolio transaction:", error);
+    } catch {
         return NextResponse.json(
             { error: "Failed to create transaction" },
             { status: 500 }
