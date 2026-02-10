@@ -43,3 +43,6 @@ next-env.d.ts
 debug-*.js
 test-*.js
 fetch-*.js
+
+# Price history data
+/data
