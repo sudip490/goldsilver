@@ -64,23 +64,20 @@ function FinanceLogDashboardContent() {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex flex-col gap-4">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Finance Log</h1>
                     <p className="text-muted-foreground">Manage your debts and credits</p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                     <CurrencySelector />
                     <Link href="/finance-log/my-account">
-                        <Button variant="outline">
+                        <Button variant="outline" className="whitespace-nowrap">
                             <User className="h-4 w-4 mr-2" />
-                            My Account
+                            <span className="hidden sm:inline">My Profile</span>
+                            <span className="sm:hidden">Profile</span>
                         </Button>
                     </Link>
-                    <Button onClick={() => setShowAddParty(true)}>
-                        <UserPlus className="h-4 w-4 mr-2" />
-                        Add Contact
-                    </Button>
                 </div>
             </div>
 
@@ -127,25 +124,25 @@ function FinanceLogDashboardContent() {
             </div>
 
             {/* Search and Filters */}
-            <div className="flex flex-col sm:flex-row gap-4 items-center">
-                <div className="relative w-full sm:max-w-sm">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <div className="flex flex-col gap-4">
+                <div className="relative w-full">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                        type="search"
                         placeholder="Search by name or phone..."
-                        className="pl-8"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10"
                     />
                 </div>
-                <div className="flex gap-2 w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0">
+
+                <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0 scrollbar-hide">
                     {['all', 'customer', 'supplier', 'personal'].map(type => (
                         <Button
                             key={type}
                             variant={filterType === type ? "default" : "outline"}
                             size="sm"
                             onClick={() => setFilterType(type)}
-                            className="capitalize"
+                            className="capitalize shrink-0"
                         >
                             {type}
                         </Button>
@@ -153,77 +150,90 @@ function FinanceLogDashboardContent() {
                 </div>
             </div>
 
+            {/* Contacts Header & Add Button */}
+            <div className="flex items-center justify-between pt-2">
+                <h2 className="text-xl font-bold tracking-tight">Contacts</h2>
+                <Button onClick={() => setShowAddParty(true)} className="bg-blue-600 hover:bg-blue-700 text-white">
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Add Contact
+                </Button>
+            </div>
+
             {/* Parties List */}
-            {isLoading ? (
-                <div className="text-center py-10">Loading...</div>
-            ) : filteredParties.length === 0 ? (
-                <Card className="border-dashed">
-                    <CardContent className="flex flex-col items-center justify-center py-10 text-center">
-                        <div className="bg-muted p-3 rounded-full mb-4">
-                            <UserPlus className="h-6 w-6 text-muted-foreground" />
-                        </div>
-                        <h3 className="font-semibold text-lg mb-1">No contacts found</h3>
-                        <p className="text-muted-foreground mb-4 max-w-sm">
-                            Add people to your Finance Log to start tracking transactions.
-                        </p>
-                        <Button onClick={() => setShowAddParty(true)}>Add Your First Contact</Button>
-                    </CardContent>
-                </Card>
-            ) : (
-                <div className="grid gap-4">
-                    {filteredParties.map(party => (
-                        <Link href={`/finance-log/${party.id}`} key={party.id}>
-                            <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
-                                <CardContent className="p-4 flex items-center justify-between">
-                                    <div className="flex items-center gap-4">
-                                        <div className={`h-10 w-10 rounded-full flex items-center justify-center text-white font-bold
-                                            ${(party.balance || 0) > 0 ? 'bg-green-600' : (party.balance || 0) < 0 ? 'bg-red-600' : 'bg-gray-400'}`}>
-                                            {party.name.charAt(0).toUpperCase()}
-                                        </div>
-                                        <div>
-                                            <div className="font-semibold">{party.name}</div>
-                                            <div className="text-xs text-muted-foreground flex gap-2 items-center">
-                                                <Badge variant="outline" className="capitalize text-[10px] h-5 px-1">{party.type}</Badge>
-                                                {party.phone && <span>{party.phone}</span>}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="text-right">
-                                        <div className={`font-bold ${(party.balance || 0) > 0 ? 'text-green-600' : (party.balance || 0) < 0 ? 'text-red-600' : 'text-gray-500'}`}>
-                                            {formatCurrency(Math.abs(party.balance || 0), currency)}
-                                        </div>
-                                        <div className="text-xs text-muted-foreground">
-                                            {(party.balance || 0) > 0 ? "To Receive" : (party.balance || 0) < 0 ? "To Pay" : "Settled"}
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </Link>
-                    ))}
-                </div>
-            )}
-
-            {/* Add Party Modal/Form */}
-            {showAddParty && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <Card className="w-full max-w-md">
-                        <CardHeader>
-                            <CardTitle>Add New Contact</CardTitle>
-                            <CardDescription>Add a person or business to your Finance Log</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <FinanceLogPartyForm
-                                onSuccess={() => {
-                                    setShowAddParty(false);
-                                    fetchData();
-                                }}
-                                onCancel={() => setShowAddParty(false)}
-                            />
+            {
+                isLoading ? (
+                    <div className="text-center py-10">Loading...</div>
+                ) : filteredParties.length === 0 ? (
+                    <Card className="border-dashed">
+                        <CardContent className="flex flex-col items-center justify-center py-10 text-center">
+                            <div className="bg-muted p-3 rounded-full mb-4">
+                                <UserPlus className="h-6 w-6 text-muted-foreground" />
+                            </div>
+                            <h3 className="font-semibold text-lg mb-1">No contacts found</h3>
+                            <p className="text-muted-foreground mb-4 max-w-sm">
+                                Add people to your Finance Log to start tracking transactions.
+                            </p>
+                            <Button onClick={() => setShowAddParty(true)}>Add Your First Contact</Button>
                         </CardContent>
                     </Card>
-                </div>
-            )}
+                ) : (
+                    <div className="grid gap-4">
+                        {filteredParties.map(party => (
+                            <Link href={`/finance-log/${party.id}`} key={party.id}>
+                                <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
+                                    <CardContent className="p-4 flex items-center justify-between">
+                                        <div className="flex items-center gap-4">
+                                            <div className={`h-10 w-10 rounded-full flex items-center justify-center text-white font-bold
+                                            ${(party.balance || 0) > 0 ? 'bg-green-600' : (party.balance || 0) < 0 ? 'bg-red-600' : 'bg-gray-400'}`}>
+                                                {party.name.charAt(0).toUpperCase()}
+                                            </div>
+                                            <div>
+                                                <div className="font-semibold">{party.name}</div>
+                                                <div className="text-xs text-muted-foreground flex gap-2 items-center">
+                                                    <Badge variant="outline" className="capitalize text-[10px] h-5 px-1">{party.type}</Badge>
+                                                    {party.phone && <span>{party.phone}</span>}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="text-right">
+                                            <div className={`font-bold ${(party.balance || 0) > 0 ? 'text-green-600' : (party.balance || 0) < 0 ? 'text-red-600' : 'text-gray-500'}`}>
+                                                {formatCurrency(Math.abs(party.balance || 0), currency)}
+                                            </div>
+                                            <div className="text-xs text-muted-foreground">
+                                                {(party.balance || 0) > 0 ? "To Receive" : (party.balance || 0) < 0 ? "To Pay" : "Settled"}
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </Link>
+                        ))}
+                    </div>
+                )
+            }
+
+            {/* Add Party Modal/Form */}
+            {
+                showAddParty && (
+                    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                        <Card className="w-full max-w-md">
+                            <CardHeader>
+                                <CardTitle>Add New Contact</CardTitle>
+                                <CardDescription>Add a person or business to your Finance Log</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <FinanceLogPartyForm
+                                    onSuccess={() => {
+                                        setShowAddParty(false);
+                                        fetchData();
+                                    }}
+                                    onCancel={() => setShowAddParty(false)}
+                                />
+                            </CardContent>
+                        </Card>
+                    </div>
+                )
+            }
         </div>
     );
 }

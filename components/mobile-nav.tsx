@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Plus, Wallet, BarChart3 } from "lucide-react";
+import { Home, FileText, Wallet, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function MobileNav() {
@@ -44,13 +44,19 @@ export function MobileNav() {
                 </Link>
 
                 <Link
-                    href="/portfolio/add"
-                    className="flex flex-col items-center justify-center flex-1 h-full -mt-6"
+                    href="/finance-log"
+                    className={cn(
+                        "flex flex-col items-center justify-center flex-1 h-full gap-1 text-[10px] font-medium transition-colors relative",
+                        pathname.startsWith("/finance-log")
+                            ? "text-primary"
+                            : "text-muted-foreground hover:text-foreground"
+                    )}
                 >
-                    <div className="h-12 w-12 rounded-full bg-gradient-to-tr from-yellow-500 to-orange-500 text-white flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-105 transition-all ring-4 ring-background">
-                        <Plus className="h-7 w-7" />
-                    </div>
-                    <span className="text-[10px] font-medium text-muted-foreground mt-1">Add</span>
+                    <FileText className={cn("h-6 w-6", pathname.startsWith("/finance-log") && "fill-current/20")} strokeWidth={pathname.startsWith("/finance-log") ? 2.5 : 2} />
+                    <span>Finance</span>
+                    {pathname.startsWith("/finance-log") && (
+                        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-t-full" />
+                    )}
                 </Link>
 
                 <Link
