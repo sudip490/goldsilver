@@ -1,13 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, TrendingDown, Lock, AlertCircle, ChevronRight } from "lucide-react";
+import { TrendingUp, TrendingDown, Lock, AlertCircle } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 
 interface Transaction {
     id: string;
@@ -104,7 +103,6 @@ export default function MyAccountPage() {
     }
 
     const { accounts } = data;
-    const totalBalance = accounts.reduce((sum, acc) => sum + acc.party.balance, 0);
     const totalOwed = accounts.filter(acc => acc.party.balance < 0).reduce((sum, acc) => sum + Math.abs(acc.party.balance), 0);
     const totalReceivable = accounts.filter(acc => acc.party.balance > 0).reduce((sum, acc) => sum + acc.party.balance, 0);
 
@@ -141,7 +139,7 @@ export default function MyAccountPage() {
 
                     <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/30 dark:to-green-900/30 border-green-200 dark:border-green-800">
                         <CardContent className="pt-6">
-                            <p className="text-sm text-muted-foreground mb-1">Total You'll Receive</p>
+                            <p className="text-sm text-muted-foreground mb-1">Total You&apos;ll Receive</p>
                             <p className="text-3xl font-bold text-green-600 dark:text-green-400">{formatCurrency(totalReceivable, currency)}</p>
                         </CardContent>
                     </Card>
@@ -181,7 +179,7 @@ export default function MyAccountPage() {
                                         {/* Balance */}
                                         <div className={`p-4 rounded-lg ${isReceivable ? 'bg-green-50 dark:bg-green-900/10' : isPayable ? 'bg-red-50 dark:bg-red-900/10' : 'bg-slate-50 dark:bg-slate-800'}`}>
                                             <p className="text-sm font-medium mb-1">
-                                                {isReceivable ? "You'll Receive" : isPayable ? "You Need to Pay" : "Settled"}
+                                                {isReceivable ? "You&apos;ll Receive" : isPayable ? "You Need to Pay" : "Settled"}
                                             </p>
                                             <p className={`text-3xl font-bold ${isReceivable ? 'text-green-600 dark:text-green-400' : isPayable ? 'text-red-600 dark:text-red-400' : ''}`}>
                                                 {formatCurrency(Math.abs(account.party.balance), currency)}
