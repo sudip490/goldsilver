@@ -188,7 +188,7 @@ export async function fetchAsheshRates(): Promise<import("./types").NepalRate[] 
         // Units: tola, gram
         const getPrice = async (type: number, unit: string) => {
             const url = `https://www.ashesh.com.np/gold/chart.php?api=506&unit=${unit}&type=${type}&range=30&v=3`;
-            const res = await fetch(url, { next: { revalidate: 300 } }); // 5 minutes cache
+            const res = await fetch(url, { next: { revalidate: 60 } }); // 5 minutes cache
             const html = await res.text();
             const dataMatch = html.match(/data: \[([\s\S]*?)\]/);
             if (dataMatch) {
@@ -456,7 +456,12 @@ export async function fetchAllMetalPrices(): Promise<{
         const silverChangePercent = item.pcXag;
 
         const prices: MetalPrice[] = [];
-        const now = new Date().toISOString();
+        // Use the date from Nepal rates data, not current time
+        // This ensures the timestamp only updates when actual new data arrives
+        const dataDate = (asheshRates && asheshRates.length > 0 && asheshRates[0].date)
+            ? asheshRates[0].date
+            : new Date().toISOString().split('T')[0];
+        const now = new Date(dataDate).toISOString();
 
         // Nepal prices (From Ashesh.com.np if available, else fallback)
         let nepalGoldPrice = 290300; // Fallback

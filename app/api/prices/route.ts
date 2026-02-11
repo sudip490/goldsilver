@@ -20,6 +20,12 @@ export async function GET() {
             });
         }
 
+        // Use the timestamp from the actual data (Nepal prices), not current time
+        // This ensures the timestamp only updates when new data arrives
+        const dataTimestamp = (asheshRates && asheshRates.length > 0 && asheshRates[0].date)
+            ? new Date(asheshRates[0].date).toISOString()
+            : (prices.length > 0 ? prices[0].lastUpdated : new Date().toISOString());
+
         return NextResponse.json({
             metalPrices: prices,
             countryData,
@@ -29,7 +35,7 @@ export async function GET() {
             goldHistory,
             silverHistory,
             news,
-            timestamp: new Date().toISOString(),
+            timestamp: dataTimestamp,
         });
     } catch {
         return NextResponse.json({ error: "Failed to fetch data" }, { status: 500 });
@@ -56,8 +62,8 @@ async function triggerPriceChangeCheck(nepalRates: Array<{ key: string; price: n
             try {
                 const data = fs.readFileSync(priceHistoryPath, 'utf8');
                 previousPrices = JSON.parse(data);
-            } catch {
-                // Failed to read previous prices
+            } catch (err) {
+                console.error('Failed to read previous prices:', err);
             }
         }
 
@@ -72,6 +78,9 @@ async function triggerPriceChangeCheck(nepalRates: Array<{ key: string; price: n
             const goldChangePercent = previousPrices.gold > 0 ? (goldChange / previousPrices.gold) * 100 : 0;
             const silverChangePercent = previousPrices.silver > 0 ? (silverChange / previousPrices.silver) * 100 : 0;
 
+            // Log price change for monitoring
+            console.log(`📧 Price changed - Gold: ${goldChange > 0 ? '+' : ''}${goldChange} (${goldChangePercent.toFixed(2)}%), Silver: ${silverChange > 0 ? '+' : ''}${silverChange} (${silverChangePercent.toFixed(2)}%) - Sending notifications...`);
+
             // Trigger email sending (async)
             fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/send-price-update-all`, {
                 method: 'POST',
@@ -84,8 +93,18 @@ async function triggerPriceChangeCheck(nepalRates: Array<{ key: string; price: n
                     goldChangePercent,
                     silverChangePercent,
                 }),
-            }).catch(() => {
-                // Email sending failed silently
+            }).then((response) => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    console.error('Notification API failed:', response.status, response.statusText);
+                }
+            }).then((data) => {
+                if (data) {
+                    console.log(`✅ Notifications sent to ${data.successCount || 0} users`);
+                }
+            }).catch((err) => {
+                console.error('Email sending failed:', err);
             });
         }
 
@@ -99,7 +118,7 @@ async function triggerPriceChangeCheck(nepalRates: Array<{ key: string; price: n
             }, null, 2)
         );
 
-    } catch {
-        // Price trigger failed silently
+    } catch (err) {
+        console.error('Price trigger failed:', err);
     }
 }

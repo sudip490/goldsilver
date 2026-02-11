@@ -75,7 +75,11 @@ export function DashboardClient({ initialData }: DashboardClientProps) {
             if (data.news) {
                 setNews(data.news);
             }
-            setLastUpdated(new Date());
+            // Use timestamp from API if available, otherwise use current time
+            // This ensures the timestamp reflects when data was actually updated
+            if (data.timestamp) {
+                setLastUpdated(new Date(data.timestamp));
+            }
         } catch {
             setError("Failed to load real-time prices. Please try again.");
         } finally {
