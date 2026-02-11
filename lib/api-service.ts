@@ -456,7 +456,12 @@ export async function fetchAllMetalPrices(): Promise<{
         const silverChangePercent = item.pcXag;
 
         const prices: MetalPrice[] = [];
-        const now = new Date().toISOString();
+        // Use the date from Nepal rates data, not current time
+        // This ensures the timestamp only updates when actual new data arrives
+        const dataDate = (asheshRates && asheshRates.length > 0 && asheshRates[0].date)
+            ? asheshRates[0].date
+            : new Date().toISOString().split('T')[0];
+        const now = new Date(dataDate).toISOString();
 
         // Nepal prices (From Ashesh.com.np if available, else fallback)
         let nepalGoldPrice = 290300; // Fallback

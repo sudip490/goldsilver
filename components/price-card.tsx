@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MetalPrice } from "@/lib/types";
-import { formatCurrency, formatTime } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils";
 import { Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -75,7 +75,7 @@ export function PriceCard({ data, featured = false }: PriceCardProps) {
 
                     <div className="flex items-center gap-1 text-xs text-muted-foreground pt-2">
                         <Clock className="h-3 w-3" />
-                        Updated {formatTime(data.lastUpdated)}
+                        Updated {formatDate(data.lastUpdated)}
                     </div>
                 </div>
             </CardContent>
