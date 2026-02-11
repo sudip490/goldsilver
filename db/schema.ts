@@ -185,3 +185,63 @@ export const khataTransaction = pgTable(
     })
 );
 
+// Price History - Track daily gold/silver prices
+export const priceHistory = pgTable(
+    "price_history",
+    {
+        id: text("id").primaryKey(),
+        date: timestamp("date").notNull(),
+        metalType: text("metal_type").notNull(), // 'gold' or 'silver'
+        priceType: text("price_type").notNull(), // 'fine-gold-tola', 'silver-tola', etc.
+        price: real("price").notNull(),
+        change: real("change"),
+        changePercent: real("change_percent"),
+        unit: text("unit"), // 'tola', '10g', etc.
+        currency: text("currency").default("NPR"),
+        createdAt: timestamp("created_at").defaultNow().notNull(),
+    },
+    (table) => [
+        index("price_history_date_idx").on(table.date),
+        index("price_history_metal_type_idx").on(table.metalType),
+        index("price_history_price_type_idx").on(table.priceType),
+    ]
+);
+
+// Nepal Rates History - Store all Nepal market rates (Fine Gold, Tejabi Gold, Silver)
+export const nepalRatesHistory = pgTable(
+    "nepal_rates_history",
+    {
+        id: text("id").primaryKey(),
+        date: timestamp("date").notNull(),
+        name: text("name").notNull(), // 'Fine Gold', 'Tejabi Gold', 'Silver'
+        unit: text("unit").notNull(), // 'Tola', '10 Gram'
+        price: real("price").notNull(),
+        change: real("change"),
+        changePercent: real("change_percent"),
+        createdAt: timestamp("created_at").defaultNow().notNull(),
+    },
+    (table) => [
+        index("nepal_rates_history_date_idx").on(table.date),
+        index("nepal_rates_history_name_idx").on(table.name),
+    ]
+);
+
+// Notification Log - Track when price change notifications were sent
+export const notificationLog = pgTable(
+    "notification_log",
+    {
+        id: text("id").primaryKey(),
+        date: timestamp("date").notNull(),
+        goldPrice: real("gold_price"),
+        silverPrice: real("silver_price"),
+        goldChange: real("gold_change"),
+        silverChange: real("silver_change"),
+        goldChangePercent: real("gold_change_percent"),
+        silverChangePercent: real("silver_change_percent"),
+        usersNotified: integer("users_notified").default(0),
+        sentAt: timestamp("sent_at").defaultNow().notNull(),
+    },
+    (table) => [
+        index("notification_log_date_idx").on(table.date),
+    ]
+);
