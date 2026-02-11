@@ -4,7 +4,7 @@ import fs from 'fs';
 import path from 'path';
 
 // Revalidate every 5 minutes (300 seconds) to get fresh news
-export const revalidate = 300;
+export const revalidate = 60;
 
 export async function GET() {
     try {
