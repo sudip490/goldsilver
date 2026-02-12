@@ -5,10 +5,14 @@ import {
     getLastRateBeforeToday,
     getLatestNotificationForToday,
     logNotification,
-    hasTodayData
+    hasTodayData,
+    getTodayNepalRates,
+    deleteTodayNepalRates
 } from "@/lib/price-history-service";
 import fs from 'fs';
 import path from 'path';
+
+import { sendPriceNotificationsToAllUsers } from "@/lib/notification-service";
 
 // Revalidate every 60 seconds to get fresh news
 export const revalidate = 60;
@@ -27,15 +31,30 @@ export async function GET() {
             hasTodayData().then(async (exists) => {
                 if (!exists) {
                     await saveDailyNepalRates(asheshRates);
-                }
-            }).catch(() => {
-                // Failed to save, continue silently
-            });
+                } else {
+                    // Check if the existing data matches the new data (handling corrections)
+                    const currentDbRates = await getTodayNepalRates();
+                    const needsUpdate = asheshRates.some(r => {
+                        // Find matching rate in DB (by name and unit)
+                        const match = currentDbRates.find(dbR => dbR.name === r.name && dbR.unit === r.unit);
+                        // If not found or price mismatch, we need to update
+                        return !match || match.price !== r.price;
+                    });
 
-            // Trigger price change detection and email notifications (async, don't wait)
-            triggerPriceChangeCheck(asheshRates).catch(() => {
-                // Price check failed silently
-            });
+                    if (needsUpdate) {
+                        console.log('📝 Found discrepancies in today\'s rates - Updating database...');
+                        await deleteTodayNepalRates();
+                        await saveDailyNepalRates(asheshRates);
+                    }
+                }
+            })
+                .then(() => {
+                    // Trigger price change detection and email notifications ONLY after DB is updated
+                    return triggerPriceChangeCheck(asheshRates);
+                })
+                .catch((err) => {
+                    console.error('Failed to save/update daily rates:', err);
+                });
         }
 
         // Use the timestamp from the actual data (Nepal prices), not current time
@@ -66,14 +85,22 @@ async function triggerPriceChangeCheck(nepalRates: Array<{ key: string; price: n
         const goldRate = nepalRates.find((r) => r.key === "fine-gold-tola")?.price || 0;
         const silverRate = nepalRates.find((r) => r.key === "silver-tola")?.price || 0;
 
+        // Ensure we have complete/valid data before proceeding
+        if (goldRate <= 0 || silverRate <= 0) {
+            console.log('Skipping notification: Incomplete data (Prices are 0/Invalid).');
+            return;
+        }
+
         // 1. Check if we already sent notification today
         const notifiedPrices = await getLatestNotificationForToday();
         if (notifiedPrices) {
             // If already notified, checks if price changed AGAIN (correction)
             // If price matches notified price, skip
             if (notifiedPrices.goldPrice === goldRate && notifiedPrices.silverPrice === silverRate) {
+                console.log('Skipping notification: Already notified exact same prices today.');
                 return; // Already notified correct prices today
             }
+            console.log(`⚠️ Price correction detected! Notified(${notifiedPrices.goldPrice}) != Current(${goldRate}). Proceeding...`);
             // If price changed significantly from notified price, we might re-notify
             // For now, let's just stick to "once per day or if price changes"
         }
@@ -121,27 +148,17 @@ async function triggerPriceChangeCheck(nepalRates: Array<{ key: string; price: n
             // Log price change for monitoring
             console.log(`📧 Price changed to ${goldRate}/${silverRate} (Prev: ${previousPrices.gold}/${previousPrices.silver}) - Sending notifications...`);
 
-            // Trigger email sending (async)
-            fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/send-price-update-all`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    goldPrice: goldRate,
-                    silverPrice: silverRate,
-                    goldChange,
-                    silverChange,
-                    goldChangePercent,
-                    silverChangePercent,
-                }),
-            }).then((response) => {
-                if (response.ok) {
-                    return response.json();
-                } else {
-                    console.error('Notification API failed:', response.status, response.statusText);
-                }
-            }).then(async (data) => {
-                if (data) {
-                    console.log(`✅ Notifications sent to ${data.successCount || 0} users`);
+            // Trigger email sending directly (no fetch loopback)
+            sendPriceNotificationsToAllUsers({
+                goldPrice: goldRate,
+                silverPrice: silverRate,
+                goldChange,
+                silverChange,
+                goldChangePercent,
+                silverChangePercent,
+            }).then(async (result) => {
+                if (result.success) {
+                    console.log(`✅ Notifications sent to ${result.successCount || 0} users`);
 
                     // Log notification to database to prevent duplicate sending
                     await logNotification({
@@ -151,11 +168,13 @@ async function triggerPriceChangeCheck(nepalRates: Array<{ key: string; price: n
                         silverChange,
                         goldChangePercent,
                         silverChangePercent,
-                        usersNotified: data.successCount || 0,
+                        usersNotified: result.successCount || 0,
                     });
+                } else {
+                    console.error('Notification service failed:', result.message);
                 }
             }).catch((err) => {
-                console.error('Email sending failed:', err);
+                console.error('Email sending process failed:', err);
             });
         }
 

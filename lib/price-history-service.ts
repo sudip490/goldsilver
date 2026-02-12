@@ -1,9 +1,7 @@
 import { db } from "@/db";
 import { priceHistory, nepalRatesHistory, notificationLog } from "@/db/schema";
-import { eq, and, gte, desc, lt } from "drizzle-orm";
+import { eq, and, gte, desc, lt, lte } from "drizzle-orm";
 import { NepalRate } from "./types";
-
-// ... existing code ...
 
 // Get latest Nepal rate strictly BEFORE today (Yesterday or earlier)
 // This is crucial to avoid comparing against the record we just saved a millisecond ago
@@ -12,8 +10,13 @@ export async function getLastRateBeforeToday(
     unit: string
 ): Promise<{ price: number; date: Date } | null> {
     try {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const localDateStr = `${year}-${month}-${day}`;
+        // Create UTC midnight date matching local YYYY-MM-DD
+        const today = new Date(localDateStr);
 
         const result = await db
             .select()
@@ -40,8 +43,12 @@ export async function getLastRateBeforeToday(
 // Get notification sent for today (to prevent duplicates)
 export async function getLatestNotificationForToday(): Promise<{ goldPrice: number; silverPrice: number } | null> {
     try {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const localDateStr = `${year}-${month}-${day}`;
+        const today = new Date(localDateStr);
 
         const result = await db
             .select()
@@ -120,9 +127,14 @@ export async function getPreviousDayPrice(
     priceType: string
 ): Promise<number | null> {
     try {
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        yesterday.setHours(0, 0, 0, 0);
+        const now = new Date();
+        const yesterday = new Date(now);
+        yesterday.setDate(now.getDate() - 1);
+        const year = yesterday.getFullYear();
+        const month = String(yesterday.getMonth() + 1).padStart(2, '0');
+        const day = String(yesterday.getDate()).padStart(2, '0');
+        const localDateStr = `${year}-${month}-${day}`;
+        const yesterdayDate = new Date(localDateStr);
 
         const result = await db
             .select()
@@ -131,7 +143,7 @@ export async function getPreviousDayPrice(
                 and(
                     eq(priceHistory.metalType, metalType),
                     eq(priceHistory.priceType, priceType),
-                    gte(priceHistory.date, yesterday)
+                    gte(priceHistory.date, yesterdayDate)
                 )
             )
             .orderBy(desc(priceHistory.date))
@@ -150,9 +162,14 @@ export async function getPreviousNepalRate(
     unit: string
 ): Promise<{ price: number; date: Date } | null> {
     try {
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        yesterday.setHours(0, 0, 0, 0);
+        const now = new Date();
+        const yesterday = new Date(now);
+        yesterday.setDate(now.getDate() - 1);
+        const year = yesterday.getFullYear();
+        const month = String(yesterday.getMonth() + 1).padStart(2, '0');
+        const day = String(yesterday.getDate()).padStart(2, '0');
+        const localDateStr = `${year}-${month}-${day}`;
+        const yesterdayDate = new Date(localDateStr);
 
         const result = await db
             .select()
@@ -161,7 +178,7 @@ export async function getPreviousNepalRate(
                 and(
                     eq(nepalRatesHistory.name, name),
                     eq(nepalRatesHistory.unit, unit),
-                    gte(nepalRatesHistory.date, yesterday)
+                    gte(nepalRatesHistory.date, yesterdayDate)
                 )
             )
             .orderBy(desc(nepalRatesHistory.date))
@@ -246,7 +263,8 @@ export async function getPriceHistoryRange(
                 and(
                     eq(priceHistory.metalType, metalType),
                     eq(priceHistory.priceType, priceType),
-                    gte(priceHistory.date, startDate)
+                    gte(priceHistory.date, startDate),
+                    lte(priceHistory.date, endDate)
                 )
             )
             .orderBy(priceHistory.date);
@@ -290,8 +308,12 @@ export async function getLatestPrice(
 // Check if today's data already exists
 export async function hasTodayData(): Promise<boolean> {
     try {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const localDateStr = `${year}-${month}-${day}`;
+        const today = new Date(localDateStr);
 
         const result = await db
             .select()
@@ -302,6 +324,54 @@ export async function hasTodayData(): Promise<boolean> {
         return result.length > 0;
     } catch (error) {
         console.error('Failed to check today data:', error);
+        return false;
+    }
+}
+
+// Get all Nepal rates for today
+export async function getTodayNepalRates(): Promise<{ name: string, unit: string, price: number }[]> {
+    try {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const localDateStr = `${year}-${month}-${day}`;
+        const today = new Date(localDateStr);
+
+        const result = await db
+            .select({
+                name: nepalRatesHistory.name,
+                unit: nepalRatesHistory.unit,
+                price: nepalRatesHistory.price
+            })
+            .from(nepalRatesHistory)
+            .where(gte(nepalRatesHistory.date, today));
+
+        return result;
+    } catch (error) {
+        console.error('Failed to get today rates:', error);
+        return [];
+    }
+}
+
+// Delete all Nepal rates for today (to allow re-saving correct data)
+export async function deleteTodayNepalRates(): Promise<boolean> {
+    try {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const localDateStr = `${year}-${month}-${day}`;
+        const today = new Date(localDateStr);
+
+        await db
+            .delete(nepalRatesHistory)
+            .where(gte(nepalRatesHistory.date, today));
+
+        console.log('🗑️ Deleted existing Nepal rates for today');
+        return true;
+    } catch (error) {
+        console.error('Failed to delete today rates:', error);
         return false;
     }
 }

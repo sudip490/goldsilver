@@ -1,17 +1,23 @@
 import nodemailer from 'nodemailer';
 
 // Email configuration
-const EMAIL_USER = 'goldsilvertracker.info@gmail.com';
-const EMAIL_PASS = 'svkeyestcxwozboj'; // Gmail App Password
+const EMAIL_USER = process.env.EMAIL_USER;
+const EMAIL_PASS = process.env.EMAIL_PASS;
 
 // Create reusable transporter
 const transporter = nodemailer.createTransport({
     service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false, // Use STARTTLS
+    requireTLS: true,
     auth: {
         user: EMAIL_USER,
         pass: EMAIL_PASS,
     },
-});
+    family: 4, // Force IPv4
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+} as any);
 
 interface PriceData {
     goldPrice: number;
@@ -107,15 +113,15 @@ export async function sendPriceUpdateEmail(
             <h2>📈 Your Portfolio Summary</h2>
             <div class="portfolio-stats">
                 <div class="stat-row">
-                    <span class="stat-label">Total Investment</span>
+                    <span class="stat-label">Total Investment  </span>
                     <span class="stat-value">NPR ${Math.round(portfolioData.totalInvestment).toLocaleString()}</span>
                 </div>
                 <div class="stat-row">
-                    <span class="stat-label">Current Value</span>
+                    <span class="stat-label">Current Value  </span>
                     <span class="stat-value">NPR ${Math.round(portfolioData.currentValue).toLocaleString()}</span>
                 </div>
                 <div class="stat-row">
-                    <span class="stat-label">Total Profit/Loss</span>
+                    <span class="stat-label">Total Profit/Loss  </span>
                     <span class="stat-value ${isProfit ? 'positive' : 'negative'}">
                         ${isProfit ? '+' : ''}NPR ${Math.abs(Math.round(portfolioData.totalProfitLoss)).toLocaleString()} 
                         (${portfolioData.totalProfitLossPercent >= 0 ? '+' : ''}${portfolioData.totalProfitLossPercent.toFixed(2)}%)
