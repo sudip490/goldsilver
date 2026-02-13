@@ -98,21 +98,12 @@ async function triggerPriceChangeCheck(
         const dataDate = new Date(dataDateStr);
 
         // 1. Check if we already sent notification FOR THIS SPECIFIC DATE
+        // We use the DATA DATE, not "today", to ensure we track the actual market date
         const notifiedPrices = await getNotificationForDate(dataDate);
-
-        // Logic:
-        // - If NO notification for this date -> SEND (Daily Update)
-        // - If YES notification, check for MISMATCH -> SEND (Correction)
-        // - Else -> SKIP
 
         let shouldNotify = false;
         let notificationType = "Daily Update";
 
-        // DEBUG: Force notification to check email delivery
-        shouldNotify = true;
-        notificationType = "DEBUG FORCE";
-
-        /* 
         if (!notifiedPrices) {
             shouldNotify = true;
             notificationType = "New Daily Data";
@@ -127,7 +118,6 @@ async function triggerPriceChangeCheck(
                 return;
             }
         }
-        */
 
         // 2. Get comparative price (YESTERDAY or earlier)
         // We explicitly avoid today's record because successful saveDailyNepalRates() might have just created it
