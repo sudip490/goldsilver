@@ -46,10 +46,8 @@ export async function getNotificationForDate(date: Date): Promise<{ goldPrice: n
         // Create start and end of the given date to ensure we match regardless of time component
         // OR if we trust the date is exactly stored as midnight, we can use eq()
         // But to be safe, let's match the YYYY-MM-DD part
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const searchDate = new Date(`${year}-${month}-${day}`); // Midnight Local
+        // Use input date directly (assumed UTC Midnight)
+        const searchDate = new Date(date);
 
         // We assume the date in DB is also stored normalized or we check range
         // For simplicity and matching 'saveDailyNepalRates', let's match the exact date if possible
@@ -57,7 +55,7 @@ export async function getNotificationForDate(date: Date): Promise<{ goldPrice: n
 
         // Let's search for any notification where the stored date matches this day
         const nextDay = new Date(searchDate);
-        nextDay.setDate(nextDay.getDate() + 1);
+        nextDay.setUTCDate(nextDay.getUTCDate() + 1);
 
         const result = await db
             .select()
