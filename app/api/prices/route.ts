@@ -163,14 +163,17 @@ async function triggerPriceChangeCheck(
             console.log(`📧 Triggering Notification [${notificationType}]. Current: ${goldRate}/${silverRate}, Prev: ${previousPrices.gold}/${previousPrices.silver}`);
 
             // Trigger email sending directly (no fetch loopback)
-            sendPriceNotificationsToAllUsers({
-                goldPrice: goldRate,
-                silverPrice: silverRate,
-                goldChange,
-                silverChange,
-                goldChangePercent,
-                silverChangePercent,
-            }).then(async (result) => {
+            // Trigger email sending directly (no fetch loopback)
+            try {
+                const result = await sendPriceNotificationsToAllUsers({
+                    goldPrice: goldRate,
+                    silverPrice: silverRate,
+                    goldChange,
+                    silverChange,
+                    goldChangePercent,
+                    silverChangePercent,
+                });
+
                 if (result.success) {
                     console.log(`✅ Notifications sent to ${result.successCount || 0} users`);
 
@@ -188,9 +191,9 @@ async function triggerPriceChangeCheck(
                 } else {
                     console.error('Notification service failed:', result.message);
                 }
-            }).catch((err) => {
+            } catch (err) {
                 console.error('Email sending process failed:', err);
-            });
+            }
         }
 
         // Keep JSON file updated for backward compatibility (local dev only usually)
