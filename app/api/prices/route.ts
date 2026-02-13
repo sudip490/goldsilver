@@ -24,11 +24,12 @@ export async function GET() {
         const countryData = generateCountryData(prices);
         const news = await fetchGoldSilverNews();
 
-        // Save Nepal rates to database (async, don't wait)
+        // Save Nepal rates to database and trigger notifications
         if (asheshRates && asheshRates.length > 0) {
-            // Check if we already saved today's data to avoid duplicates
-            // We use .then() to allow this to run in background without blocking response
-            hasTodayData().then(async (exists) => {
+            try {
+                // Check if we already saved today's data to avoid duplicates
+                const exists = await hasTodayData();
+
                 if (!exists) {
                     await saveDailyNepalRates(asheshRates);
                 } else {
@@ -47,14 +48,14 @@ export async function GET() {
                         await saveDailyNepalRates(asheshRates);
                     }
                 }
-            })
-                .then(() => {
-                    // Trigger price change detection and email notifications ONLY after DB is updated
-                    return triggerPriceChangeCheck(asheshRates);
-                })
-                .catch((err) => {
-                    console.error('Failed to save/update daily rates:', err);
-                });
+
+                // Trigger price change detection and email notifications ONLY after DB is updated
+                // We use 'await' here to ensure emails are sent before the function typically terminates on serverless
+                await triggerPriceChangeCheck(asheshRates);
+
+            } catch (err) {
+                console.error('Failed to save/update daily rates or send notifications:', err);
+            }
         }
 
         // Use the timestamp from the actual data (Nepal prices), not current time
