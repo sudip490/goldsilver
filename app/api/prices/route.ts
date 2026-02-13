@@ -108,6 +108,11 @@ async function triggerPriceChangeCheck(
         let shouldNotify = false;
         let notificationType = "Daily Update";
 
+        // DEBUG: Force notification to check email delivery
+        shouldNotify = true;
+        notificationType = "DEBUG FORCE";
+
+        /* 
         if (!notifiedPrices) {
             shouldNotify = true;
             notificationType = "New Daily Data";
@@ -122,6 +127,7 @@ async function triggerPriceChangeCheck(
                 return;
             }
         }
+        */
 
         // 2. Get comparative price (YESTERDAY or earlier)
         // We explicitly avoid today's record because successful saveDailyNepalRates() might have just created it
@@ -162,7 +168,7 @@ async function triggerPriceChangeCheck(
             // Log trigger reason
             console.log(`📧 Triggering Notification [${notificationType}]. Current: ${goldRate}/${silverRate}, Prev: ${previousPrices.gold}/${previousPrices.silver}`);
 
-            // Trigger email sending directly (no fetch loopback)
+
             // Trigger email sending directly (no fetch loopback)
             try {
                 const result = await sendPriceNotificationsToAllUsers({
