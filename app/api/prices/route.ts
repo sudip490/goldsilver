@@ -3,7 +3,7 @@ import { fetchAllMetalPrices, generateCountryData, fetchNRBRatesRaw, fetchGoldSi
 import {
     saveDailyNepalRates,
     getLastRateBeforeToday,
-    getLatestNotificationForToday,
+    getNotificationForDate,
     logNotification,
     hasTodayData,
     getTodayNepalRates,
@@ -80,29 +80,46 @@ export async function GET() {
 }
 
 // Helper function to trigger price change check and email notifications
-async function triggerPriceChangeCheck(nepalRates: Array<{ key: string; price: number; name: string; unit: string }>) {
+async function triggerPriceChangeCheck(
+    nepalRates: Array<{ key: string; price: number; name: string; unit: string; date: string }>
+) {
     try {
         const goldRate = nepalRates.find((r) => r.key === "fine-gold-tola")?.price || 0;
         const silverRate = nepalRates.find((r) => r.key === "silver-tola")?.price || 0;
+        const dataDateStr = nepalRates[0]?.date;
 
         // Ensure we have complete/valid data before proceeding
-        if (goldRate <= 0 || silverRate <= 0) {
-            console.log('Skipping notification: Incomplete data (Prices are 0/Invalid).');
+        if (!dataDateStr || goldRate <= 0 || silverRate <= 0) {
+            console.log('Skipping notification: Incomplete data (Missing Date/Prices).');
             return;
         }
 
-        // 1. Check if we already sent notification today
-        const notifiedPrices = await getLatestNotificationForToday();
-        if (notifiedPrices) {
-            // If already notified, checks if price changed AGAIN (correction)
-            // If price matches notified price, skip
-            if (notifiedPrices.goldPrice === goldRate && notifiedPrices.silverPrice === silverRate) {
-                console.log('Skipping notification: Already notified exact same prices today.');
-                return; // Already notified correct prices today
+        const dataDate = new Date(dataDateStr);
+
+        // 1. Check if we already sent notification FOR THIS SPECIFIC DATE
+        const notifiedPrices = await getNotificationForDate(dataDate);
+
+        // Logic:
+        // - If NO notification for this date -> SEND (Daily Update)
+        // - If YES notification, check for MISMATCH -> SEND (Correction)
+        // - Else -> SKIP
+
+        let shouldNotify = false;
+        let notificationType = "Daily Update";
+
+        if (!notifiedPrices) {
+            shouldNotify = true;
+            notificationType = "New Daily Data";
+        } else {
+            // Check for correction
+            if (notifiedPrices.goldPrice !== goldRate || notifiedPrices.silverPrice !== silverRate) {
+                shouldNotify = true;
+                notificationType = "Price Correction";
+                console.log(`⚠️ Price Correction: Previous(${notifiedPrices.goldPrice}) != New(${goldRate})`);
+            } else {
+                console.log(`✅ Already notified for date ${dataDateStr}. Skipping.`);
+                return;
             }
-            console.log(`⚠️ Price correction detected! Notified(${notifiedPrices.goldPrice}) != Current(${goldRate}). Proceeding...`);
-            // If price changed significantly from notified price, we might re-notify
-            // For now, let's just stick to "once per day or if price changes"
         }
 
         // 2. Get comparative price (YESTERDAY or earlier)
@@ -133,31 +150,16 @@ async function triggerPriceChangeCheck(nepalRates: Array<{ key: string; price: n
             // This prevents First Run Notification Spam (0 -> 150000)
         }
 
-        // 3. Check if prices have changed
-        // Explicitly ignore if previous price is 0 (First Run safety)
-        const validPreviousData = previousPrices.gold > 0 && previousPrices.silver > 0;
-        const goldChanged = validPreviousData && previousPrices.gold !== goldRate;
-        const silverChanged = validPreviousData && previousPrices.silver !== silverRate;
-        const pricesChanged = goldChanged || silverChanged;
 
-        // Determine if we should send notification
-        // We send if:
-        // 1. We have valid previous data (to calculate change properly and avoid 0 -> X spam)
-        // 2. AND (First notification of the day OR Price Correction OR Significant Change)
-        // Since we already filtered out "Already notified exact same prices" at the top (line 99),
-        // if we are here and have notifiedPrices, it implies a Correction is needed.
-        // If !notifiedPrices, it's the Daily Update.
-        // So effectively: If (validPreviousData) -> SEND.
 
-        if (validPreviousData) {
+        if (shouldNotify) {
             const goldChange = goldRate - previousPrices.gold;
             const silverChange = silverRate - previousPrices.silver;
             const goldChangePercent = previousPrices.gold > 0 ? (goldChange / previousPrices.gold) * 100 : 0;
             const silverChangePercent = previousPrices.silver > 0 ? (silverChange / previousPrices.silver) * 100 : 0;
 
             // Log trigger reason
-            const reason = notifiedPrices ? "Correction" : (pricesChanged ? "Price Change" : "Daily Update (Unchanged)");
-            console.log(`📧 Triggering Notification [${reason}]. Current: ${goldRate}/${silverRate}, Prev: ${previousPrices.gold}/${previousPrices.silver}`);
+            console.log(`📧 Triggering Notification [${notificationType}]. Current: ${goldRate}/${silverRate}, Prev: ${previousPrices.gold}/${previousPrices.silver}`);
 
             // Trigger email sending directly (no fetch loopback)
             sendPriceNotificationsToAllUsers({
@@ -180,6 +182,7 @@ async function triggerPriceChangeCheck(nepalRates: Array<{ key: string; price: n
                         goldChangePercent,
                         silverChangePercent,
                         usersNotified: result.successCount || 0,
+                        date: dataDate,
                     });
                 } else {
                     console.error('Notification service failed:', result.message);

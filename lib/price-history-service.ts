@@ -40,20 +40,34 @@ export async function getLastRateBeforeToday(
     }
 }
 
-// Get notification sent for today (to prevent duplicates)
-export async function getLatestNotificationForToday(): Promise<{ goldPrice: number; silverPrice: number } | null> {
+// Get notification sent for a specific date (Data Date)
+export async function getNotificationForDate(date: Date): Promise<{ goldPrice: number; silverPrice: number } | null> {
     try {
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const day = String(now.getDate()).padStart(2, '0');
-        const localDateStr = `${year}-${month}-${day}`;
-        const today = new Date(localDateStr);
+        // Create start and end of the given date to ensure we match regardless of time component
+        // OR if we trust the date is exactly stored as midnight, we can use eq()
+        // But to be safe, let's match the YYYY-MM-DD part
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const searchDate = new Date(`${year}-${month}-${day}`); // Midnight Local
+
+        // We assume the date in DB is also stored normalized or we check range
+        // For simplicity and matching 'saveDailyNepalRates', let's match the exact date if possible
+        // But 'saveDailyNepalRates' stores 'new Date(rate.date)'. 
+
+        // Let's search for any notification where the stored date matches this day
+        const nextDay = new Date(searchDate);
+        nextDay.setDate(nextDay.getDate() + 1);
 
         const result = await db
             .select()
             .from(notificationLog)
-            .where(gte(notificationLog.date, today))
+            .where(
+                and(
+                    gte(notificationLog.date, searchDate),
+                    lt(notificationLog.date, nextDay)
+                )
+            )
             .orderBy(desc(notificationLog.sentAt))
             .limit(1);
 
@@ -65,9 +79,14 @@ export async function getLatestNotificationForToday(): Promise<{ goldPrice: numb
         }
         return null;
     } catch (error) {
-        console.error('Failed to check today notification:', error);
+        console.error('Failed to check notification for date:', error);
         return null;
     }
+}
+
+// Get notification sent for today (to prevent duplicates) - DEPRECATED in favor of getNotificationForDate
+export async function getLatestNotificationForToday(): Promise<{ goldPrice: number; silverPrice: number } | null> {
+    return getNotificationForDate(new Date());
 }
 
 
@@ -233,11 +252,12 @@ export async function logNotification(data: {
     goldChangePercent: number;
     silverChangePercent: number;
     usersNotified: number;
+    date?: Date;
 }) {
     try {
         await db.insert(notificationLog).values({
             id: generateId(),
-            date: new Date(),
+            date: data.date || new Date(),
             ...data,
         });
         console.log(`✅ Logged notification for ${data.usersNotified} users`);
