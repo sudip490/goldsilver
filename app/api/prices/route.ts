@@ -135,18 +135,29 @@ async function triggerPriceChangeCheck(nepalRates: Array<{ key: string; price: n
 
         // 3. Check if prices have changed
         // Explicitly ignore if previous price is 0 (First Run safety)
-        const goldChanged = previousPrices.gold !== goldRate && previousPrices.gold !== 0;
-        const silverChanged = previousPrices.silver !== silverRate && previousPrices.silver !== 0;
+        const validPreviousData = previousPrices.gold > 0 && previousPrices.silver > 0;
+        const goldChanged = validPreviousData && previousPrices.gold !== goldRate;
+        const silverChanged = validPreviousData && previousPrices.silver !== silverRate;
         const pricesChanged = goldChanged || silverChanged;
 
-        if (pricesChanged) {
+        // Determine if we should send notification
+        // We send if:
+        // 1. We have valid previous data (to calculate change properly and avoid 0 -> X spam)
+        // 2. AND (First notification of the day OR Price Correction OR Significant Change)
+        // Since we already filtered out "Already notified exact same prices" at the top (line 99),
+        // if we are here and have notifiedPrices, it implies a Correction is needed.
+        // If !notifiedPrices, it's the Daily Update.
+        // So effectively: If (validPreviousData) -> SEND.
+
+        if (validPreviousData) {
             const goldChange = goldRate - previousPrices.gold;
             const silverChange = silverRate - previousPrices.silver;
             const goldChangePercent = previousPrices.gold > 0 ? (goldChange / previousPrices.gold) * 100 : 0;
             const silverChangePercent = previousPrices.silver > 0 ? (silverChange / previousPrices.silver) * 100 : 0;
 
-            // Log price change for monitoring
-            console.log(`📧 Price changed to ${goldRate}/${silverRate} (Prev: ${previousPrices.gold}/${previousPrices.silver}) - Sending notifications...`);
+            // Log trigger reason
+            const reason = notifiedPrices ? "Correction" : (pricesChanged ? "Price Change" : "Daily Update (Unchanged)");
+            console.log(`📧 Triggering Notification [${reason}]. Current: ${goldRate}/${silverRate}, Prev: ${previousPrices.gold}/${previousPrices.silver}`);
 
             // Trigger email sending directly (no fetch loopback)
             sendPriceNotificationsToAllUsers({
