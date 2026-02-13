@@ -98,12 +98,8 @@ async function triggerPriceChangeCheck(
         const dataDate = new Date(dataDateStr);
 
         // 1. Check if we already sent notification FOR THIS SPECIFIC DATE
+        // We use the DATA DATE, not "today", to ensure we track the actual market date
         const notifiedPrices = await getNotificationForDate(dataDate);
-
-        // Logic:
-        // - If NO notification for this date -> SEND (Daily Update)
-        // - If YES notification, check for MISMATCH -> SEND (Correction)
-        // - Else -> SKIP
 
         let shouldNotify = false;
         let notificationType = "Daily Update";
@@ -162,7 +158,7 @@ async function triggerPriceChangeCheck(
             // Log trigger reason
             console.log(`📧 Triggering Notification [${notificationType}]. Current: ${goldRate}/${silverRate}, Prev: ${previousPrices.gold}/${previousPrices.silver}`);
 
-            // Trigger email sending directly (no fetch loopback)
+
             // Trigger email sending directly (no fetch loopback)
             try {
                 const result = await sendPriceNotificationsToAllUsers({
