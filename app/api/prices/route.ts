@@ -15,7 +15,7 @@ import path from 'path';
 import { sendPriceNotificationsToAllUsers } from "@/lib/notification-service";
 
 // Revalidate every 60 seconds to get fresh news
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
     try {

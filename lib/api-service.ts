@@ -444,7 +444,15 @@ export async function fetchAllMetalPrices(): Promise<{
         ]);
 
         if (!goldPriceData || !goldPriceData.items || goldPriceData.items.length === 0) {
-            throw new Error("Invalid data from API");
+            console.error("GoldPriceOrg API returned invalid or empty data");
+            // Instead of throwing, we'll continue with default values or return empty
+            return {
+                prices: [],
+                rates: exchangeRates || {},
+                nepalRates: asheshRates || [],
+                goldHistory: goldHistory || [],
+                silverHistory: silverHistory || []
+            };
         }
 
         const item = goldPriceData.items[0];
@@ -1053,9 +1061,15 @@ export async function fetchAllMetalPrices(): Promise<{
             goldHistory,
             silverHistory
         };
-    } catch {
-        // Return empty array or throw error
-        throw new Error('Failed to fetch metal prices');
+    } catch (error) {
+        console.error("Error in fetchAllMetalPrices:", error);
+        return {
+            prices: [],
+            rates: {},
+            nepalRates: [],
+            goldHistory: [],
+            silverHistory: []
+        };
     }
 }
 
