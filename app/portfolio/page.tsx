@@ -29,6 +29,10 @@ export default async function PortfolioPage() {
             ? db.select().from(portfolioTransaction)
                 .where(eq(portfolioTransaction.userId, session.user.id))
                 .orderBy(desc(portfolioTransaction.date))
+                .catch(err => {
+                    console.error("Portfolio DB Fetch Error:", err);
+                    return [];
+                })
             : Promise.resolve([])
     ]);
 

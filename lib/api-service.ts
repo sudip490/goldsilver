@@ -88,11 +88,13 @@ async function fetchNRBRates(): Promise<Record<string, number>> {
             const code = rate.currency.iso3;
             if (code === "USD") return;
 
-            const buyNPR = parseFloat(rate.buy) / (rate.currency.unit || 1);
+            const buyNPR = safeFloat(rate.buy) / (rate.currency.unit || 1);
             // 1 USD = usdBuyNPR NPR
             // 1 Unit of X = buyNPR NPR
             // => 1 USD = (usdBuyNPR / buyNPR) Units of X
-            rates[code] = usdBuyNPR / buyNPR;
+            if (buyNPR > 0) {
+                rates[code] = usdBuyNPR / buyNPR;
+            }
         });
 
         return rates;
@@ -100,6 +102,12 @@ async function fetchNRBRates(): Promise<Record<string, number>> {
     } catch {
         return {};
     }
+}
+
+// Helper to safely parse strings to finite numbers
+function safeFloat(val: string | number, fallback: number = 0): number {
+    const parsed = typeof val === 'string' ? parseFloat(val.replace(/[^\d.-]/g, '')) : val;
+    return isFinite(parsed) ? parsed : fallback;
 }
 
 // Fetch raw NRB rates for detailed table display
@@ -516,7 +524,15 @@ export async function fetchAllMetalPrices(): Promise<{
         const dataDate = (asheshRates && asheshRates.length > 0 && asheshRates[0].date)
             ? asheshRates[0].date
             : new Date().toISOString().split('T')[0];
-        const now = new Date(dataDate).toISOString();
+        
+        // Ensure dataDate is valid before calling toISOString()
+        let now: string;
+        try {
+            const d = new Date(dataDate);
+            now = isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
+        } catch {
+            now = new Date().toISOString();
+        }
 
         // Nepal prices (From Ashesh.com.np if available, else fallback)
         let nepalGoldPrice = 290300; // Fallback
