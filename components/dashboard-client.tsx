@@ -156,7 +156,11 @@ export function DashboardClient({ initialData }: DashboardClientProps) {
                         </div>
                         <div className="mt-2 text-xs text-muted-foreground">
                             Gold & silver rate updated on <span className="font-medium text-foreground">
-                                {nepalRates.length > 0 ? new Date(nepalRates[0].date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Loading...'}
+                                {(() => {
+                                    if (nepalRates.length === 0) return 'Loading...';
+                                    const d = new Date(nepalRates[0].date);
+                                    return isNaN(d.getTime()) ? 'Recently' : d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                                })()}
                             </span>
                         </div>
                     </div>
