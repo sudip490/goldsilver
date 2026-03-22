@@ -227,65 +227,74 @@ export async function fetchAsheshRates(): Promise<import("./types").NepalRate[] 
         const ratesList: import("./types").NepalRate[] = [];
         const today = new Date().toISOString().split('T')[0];
 
-        // Helper to fetch price from chart
-        // Types: 0=Fine Gold, 1=Tejabi Gold, 2=Silver
-        // Units: tola, gram
-        const getPrice = async (type: number, unit: string) => {
+        const getLatestData = async (type: number, unit: string) => {
             const url = `https://www.ashesh.com.np/gold/chart.php?api=506&unit=${unit}&type=${type}&range=30&v=3`;
-            const res = await fetch(url, { next: { revalidate: 60 } }); // 5 minutes cache
+            const res = await fetch(url, { next: { revalidate: 60 } });
             const html = await res.text();
-            const dataMatch = html.match(/data: \[([\s\S]*?)\]/);
-            if (dataMatch) {
-                // The data is ordered from newest to oldest in the array [today, yesterday, ...]
-                // Actually the debug output showed { x: new Date(2026,1,03), y: 290300 } as the first item.
-                // So we take the first match.
-                const m = dataMatch[1].match(/y: (\d+)/);
-                if (m) return parseFloat(m[1]);
+
+            // Extract all data points: { x: new Date(2026,2,22), y: 282000 }
+            const regex = /x: new Date\((\d+),(\d+),(\d+)\), y: (\d+)/g;
+            let match;
+            let latestPrice = 0;
+            let latestDate = "";
+
+            while ((match = regex.exec(html)) !== null) {
+                const year = match[1];
+                const month = (parseInt(match[2]) + 1).toString().padStart(2, '0');
+                const day = match[3].padStart(2, '0');
+                const price = parseFloat(match[4]);
+                const dateStr = `${year}-${month}-${day}`;
+
+                if (latestPrice === 0 || dateStr > latestDate) {
+                    latestPrice = price;
+                    latestDate = dateStr;
+                }
             }
-            return 0;
+
+            return { price: latestPrice, date: latestDate };
         };
 
-        const addRate = (name: string, unit: string, price: number) => {
-            if (price <= 0) return;
+        const addRate = (name: string, unit: string, data: { price: number, date: string }) => {
+            if (data.price <= 0) return;
             ratesList.push({
                 key: `${name}-${unit}`.replace(/\s+/g, '-').toLowerCase(),
                 name: name,
                 unit: unit,
-                price: price,
+                price: data.price,
                 change: 0,
                 changePercent: 0,
-                date: today
+                date: data.date || today
             });
         };
 
-        // Fetch Fine Gold Tola (Type 0, unit tola)
-        const fineGoldTola = await getPrice(0, "tola");
-        addRate("Fine Gold", "Tola", fineGoldTola);
+        // Fetch all units in parallel for better performance
+        const [
+            fineGoldTolaData,
+            fineGold10gData,
+            tejabiGoldTolaData,
+            tejabiGold10gData,
+            silverTolaData,
+            silver10gData
+        ] = await Promise.all([
+            getLatestData(0, "tola"),
+            getLatestData(0, "gram"),
+            getLatestData(1, "tola"),
+            getLatestData(1, "gram"),
+            getLatestData(2, "tola"),
+            getLatestData(2, "gram")
+        ]);
 
-        // Fetch Fine Gold 10g (Type 0, unit gram -> implies 10g value in Ashesh? Debug showed 248885 for 'gram' which is 10g price)
-        // Verified in debug: 'gram' param gives 248885 which matches Fine Gold 10g price.
-        const fineGold10g = await getPrice(0, "gram");
-        addRate("Fine Gold", "10 Gram", fineGold10g);
-
-        // Fetch Tejabi Gold Tola (Type 1, unit tola)
-        const tejabiTola = await getPrice(1, "tola");
-        addRate("Tejabi Gold", "Tola", tejabiTola);
-
-        // Fetch Tejabi Gold 10g (Type 1, unit gram)
-        const tejabi10g = await getPrice(1, "gram");
-        addRate("Tejabi Gold", "10 Gram", tejabi10g);
-
-        // Fetch Silver Tola (Type 2, unit tola)
-        const silverTola = await getPrice(2, "tola");
-        addRate("Silver", "Tola", silverTola);
-
-        // Fetch Silver 10g (Type 2, unit gram)
-        const silver10g = await getPrice(2, "gram");
-        addRate("Silver", "10 Gram", silver10g);
+        addRate("Fine Gold", "Tola", fineGoldTolaData);
+        addRate("Fine Gold", "10 Gram", fineGold10gData);
+        addRate("Tejabi Gold", "Tola", tejabiGoldTolaData);
+        addRate("Tejabi Gold", "10 Gram", tejabiGold10gData);
+        addRate("Silver", "Tola", silverTolaData);
+        addRate("Silver", "10 Gram", silver10gData);
 
         return ratesList.length > 0 ? ratesList : null;
 
-    } catch {
+    } catch (error) {
+        console.error("Ashesh fetch error:", error);
         return null;
     }
 }
