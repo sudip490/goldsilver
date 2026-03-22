@@ -1,7 +1,7 @@
 import { DashboardClient } from "@/components/dashboard-client";
 import { fetchAllMetalPrices, fetchNRBRatesRaw, generateCountryData, fetchGoldSilverNews } from "@/lib/api-service";
 
-export const revalidate = 300; // Revalidate every 5 minutes
+export const dynamic = 'force-dynamic';
 
 export default async function Home() {
     // Fetch all data in parallel

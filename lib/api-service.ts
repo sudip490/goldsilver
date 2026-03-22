@@ -2,23 +2,59 @@ import { MetalPrice, CountryData, NRBRawRate, GoldPriceOrgData } from "./types";
 import { API_CONFIG, CURRENCY_TO_NPR, UNIT_CONVERSIONS } from "./api-config";
 import * as cheerio from "cheerio";
 
-// Fetch gold and silver prices from GoldPrice.org API
-export async function fetchGoldPriceOrgData(): Promise<GoldPriceOrgData | null> {
+// Fetch gold and silver prices from Yahoo Finance API (Free & Reliable)
+export async function fetchGlobalMetalPrices(): Promise<GoldPriceOrgData | null> {
     try {
-        const response = await fetch(
-            `${API_CONFIG.goldPrice.baseUrl}/${API_CONFIG.goldPrice.baseCurrency}`,
-            {
-                next: { revalidate: 10 }, // Cache for 5 minutes
-            }
-        );
+        const [goldRes, silverRes] = await Promise.all([
+            fetch('https://query1.finance.yahoo.com/v8/finance/chart/GC=F?interval=1d', {
+                headers: { 'User-Agent': 'Mozilla/5.0' },
+                next: { revalidate: 300 }
+            }),
+            fetch('https://query1.finance.yahoo.com/v8/finance/chart/SI=F?interval=1d', {
+                headers: { 'User-Agent': 'Mozilla/5.0' },
+                next: { revalidate: 300 }
+            })
+        ]);
 
-        if (!response.ok) {
-            throw new Error("Failed to fetch from GoldPrice.org");
+        if (!goldRes.ok || !silverRes.ok) {
+            throw new Error("Failed to fetch from Yahoo Finance");
         }
 
-        const data = await response.json() as GoldPriceOrgData;
-        return data;
-    } catch {
+        const goldData = await goldRes.json();
+        const silverData = await silverRes.json();
+
+        const goldMeta = goldData.chart?.result?.[0]?.meta;
+        const silverMeta = silverData.chart?.result?.[0]?.meta;
+
+        if (!goldMeta || !silverMeta) {
+            throw new Error("Invalid format from Yahoo Finance");
+        }
+
+        const xauPrice = goldMeta.regularMarketPrice;
+        const xauClose = goldMeta.chartPreviousClose;
+        const chgXau = xauPrice - xauClose;
+        const pcXau = (chgXau / xauClose) * 100;
+
+        const xagPrice = silverMeta.regularMarketPrice;
+        const xagClose = silverMeta.chartPreviousClose;
+        const chgXag = xagPrice - xagClose;
+        const pcXag = (chgXag / xagClose) * 100;
+
+        return {
+            items: [{
+                curr: "USD",
+                xauPrice,
+                xagPrice,
+                chgXau,
+                chgXag,
+                pcXau,
+                pcXag,
+                xauClose,
+                xagClose
+            }]
+        } as GoldPriceOrgData;
+    } catch (err) {
+        console.error("Error fetching Yahoo Finance data:", err);
         return null;
     }
 }
@@ -435,16 +471,35 @@ export async function fetchAllMetalPrices(): Promise<{
     silverHistory: import("./types").PriceHistory[]
 }> {
     try {
-        const [goldPriceData, exchangeRates, asheshRates, goldHistory, silverHistory] = await Promise.all([
-            fetchGoldPriceOrgData(),
+        const fetchedData = await Promise.all([
+            fetchGlobalMetalPrices(),
             fetchExchangeRates(),
             fetchAsheshRates(),
             fetchAsheshHistory(0), // Gold
             fetchAsheshHistory(2)  // Silver
         ]);
 
+        let goldPriceData = fetchedData[0];
+        const [, exchangeRates, asheshRates, goldHistory, silverHistory] = fetchedData;
+
         if (!goldPriceData || !goldPriceData.items || goldPriceData.items.length === 0) {
-            throw new Error("Invalid data from API");
+            console.error("Global API returned invalid or empty data (Fallback to static values)");
+            
+            // Provide fallback data object so the rest of the function can continue
+            // and the UI doesn't look empty or crash.
+            goldPriceData = {
+                items: [{
+                    curr: "USD",
+                    xauPrice: 2715.50, // Recent gold price fallback
+                    xagPrice: 32.40,   // Recent silver price fallback
+                    chgXau: 0,
+                    chgXag: 0,
+                    pcXau: 0,
+                    pcXag: 0,
+                    xauClose: 2715.50,
+                    xagClose: 32.40
+                }]
+            };
         }
 
         const item = goldPriceData.items[0];
@@ -1022,7 +1077,7 @@ export async function fetchAllMetalPrices(): Promise<{
         // Add today's current price to history if not already there
         const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
 
-        // Get today's Nepal gold price (Fine Gold Tola)
+        // Get today'm s Nepal gold price (Fine Gold Tola)
         const todayGoldPrice = asheshRates?.find(r => r.key === 'fine-gold-tola')?.price;
         const todaySilverPrice = asheshRates?.find(r => r.key === 'silver-tola')?.price;
 
@@ -1053,9 +1108,15 @@ export async function fetchAllMetalPrices(): Promise<{
             goldHistory,
             silverHistory
         };
-    } catch {
-        // Return empty array or throw error
-        throw new Error('Failed to fetch metal prices');
+    } catch (error) {
+        console.error("Error in fetchAllMetalPrices:", error);
+        return {
+            prices: [],
+            rates: {},
+            nepalRates: [],
+            goldHistory: [],
+            silverHistory: []
+        };
     }
 }
 
