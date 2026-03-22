@@ -44,7 +44,7 @@ export function DashboardClient({ initialData }: DashboardClientProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [lastUpdated, setLastUpdated] = useState<Date>(
-        initialData.timestamp ? new Date(initialData.timestamp) : new Date()
+        initialData.timestamp ? new Date(initialData.timestamp) : new Date(0) // Default to a stable date if no timestamp
     );
 
     const fetchPrices = async () => {

@@ -3,7 +3,7 @@
 import { authClient } from "@/lib/auth-client";
 import { LoginDialog } from "@/components/login-dialog";
 import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface ProtectedRouteProps {
     children: React.ReactNode;
@@ -12,8 +12,14 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
     const { data: session, isPending } = authClient.useSession();
     const [showLoginDialog, setShowLoginDialog] = useState(true);
+    const [mounted, setMounted] = useState(false);
 
-    if (isPending) {
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    // During SSR and first hydration, show the consistent loader to avoid mismatch
+    if (!mounted || isPending) {
         return (
             <div className="flex min-h-screen items-center justify-center">
                 <div className="text-center">
