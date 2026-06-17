@@ -4,12 +4,18 @@ import { db } from "../db";
 import * as schema from "../db/schema";
 
 const PRODUCTION_URL = "https://goldsilver-brown.vercel.app";
+const DEV_URL = "http://localhost:3000";
 
-// Normalize the configured base URL so the Google redirect URI is always
-// exactly "<origin>/api/auth/callback/google". A trailing slash or stray
-// whitespace in BETTER_AUTH_URL produces a redirect_uri_mismatch on Google,
-// so we trim it and fall back to the known production origin.
-const baseURL = (process.env.BETTER_AUTH_URL || PRODUCTION_URL)
+// The Google redirect URI is built as `<baseURL>/api/auth/callback/google`
+// and must EXACTLY match a URI registered in the Google console. To make this
+// immune to a misconfigured BETTER_AUTH_URL in Vercel, production is pinned to
+// the registered origin; dev uses the env var (or localhost) so other setups
+// still work. Value is trimmed and stripped of trailing slashes.
+const baseURL = (
+    process.env.NODE_ENV === "production"
+        ? PRODUCTION_URL
+        : (process.env.BETTER_AUTH_URL || DEV_URL)
+)
     .trim()
     .replace(/\/+$/, "");
 
